@@ -1,0 +1,83 @@
+{
+    "unityVersion": "6000.6.0f1",
+    "graphicsDevice": "NVIDIA GeForce RTX 2050",
+    "resolution": "1920 x 1080",
+    "checks": [
+        {
+            "name": "01-menu.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,559"
+        },
+        {
+            "name": "Scene initialized",
+            "passed": true,
+            "detail": "4 gates, pilot camera, live cockpit"
+        },
+        {
+            "name": "Forward thrust",
+            "passed": true,
+            "detail": "velocity 24,00 m/s"
+        },
+        {
+            "name": "Inertial coast",
+            "passed": true,
+            "detail": "before 24,00; after 24,00"
+        },
+        {
+            "name": "Active braking",
+            "passed": true,
+            "detail": "velocity 0,000 m/s"
+        },
+        {
+            "name": "Lateral thrusters",
+            "passed": true,
+            "detail": "X velocity 7,00 m/s"
+        },
+        {
+            "name": "Angular flight",
+            "passed": true,
+            "detail": "turn 16,57 degrees"
+        },
+        {
+            "name": "Reset",
+            "passed": true,
+            "detail": "velocity, hull, engine and route reset"
+        },
+        {
+            "name": "Checkpoint crossing",
+            "passed": true,
+            "detail": "current gate index 1"
+        },
+        {
+            "name": "Collision damage",
+            "passed": true,
+            "detail": "hull 55,00%"
+        },
+        {
+            "name": "Keyboard flight input",
+            "passed": true,
+            "detail": "W command 1; speed 2,40"
+        },
+        {
+            "name": "Keyboard brake input",
+            "passed": true,
+            "detail": "Space command reaches flight controller"
+        },
+        {
+            "name": "Keyboard assist toggle",
+            "passed": true,
+            "detail": "T toggles stabilization"
+        },
+        {
+            "name": "02-cockpit.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,656"
+        },
+        {
+            "name": "No runtime errors",
+            "passed": true,
+            "detail": "errors 0"
+        }
+    ],
+    "errors": []
+}
