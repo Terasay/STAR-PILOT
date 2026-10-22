@@ -8,7 +8,9 @@ namespace StarPilot
         public static Material ScreenMaterial;
         public ShipFlightController Ship;
         public FlightRoute Route;
-        public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, CombinerText, OverheadText;
+        public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, OverheadText;
+        public Text RouteText, GuidanceText, StatusText, InteractionText;
+        public CockpitInteraction Interaction;
         public ShipLighting Lighting;
         public RectTransform[] AxisIndicators=new RectTransform[3];
         public FlightInstrument[] Instruments;
@@ -23,12 +25,26 @@ namespace StarPilot
             nextRefresh = Time.unscaledTime + 0.1f;
             OverheadText.text=$"PROPULSION    {(Ship.EngineOn?"ONLINE":"STANDBY")}\nFLIGHT ASSIST   {(Ship.AssistOn?"ENGAGED":"FREE DRIFT")}\nFLOOD {(Lighting.HeadlightsOn?"ON":"OFF")}     CABIN {(Lighting.CabinBright?"BRIGHT":"DIM")}";
             SpeedText.text=$"{Ship.Speed:000.0}";
-            SystemsText.text=$"HULL / {Ship.Hull:000}%";
-            FlightMode.text=!Ship.EngineOn?"PROPULSION / STANDBY":Ship.Brake?"DECELERATION / ACTIVE":Ship.Boost?"OVERDRIVE / ACTIVE":Ship.AssistOn?"FLIGHT ASSIST / ON":"FLIGHT ASSIST / OFF";
-            NavigationText.text=!Ship.ControlsEnabled?"FLIGHT PAUSED / ESC":Route.Completed?"ROUTE COMPLETE":$"GATE {Route.Current+1:00}  ·  {Route.Distance:0000} M";
+            SystemsText.text=$"КОРПУС  {Ship.Hull:000}%";
+            FlightMode.text=!Ship.EngineOn?"ДВИГАТЕЛЬ ВЫКЛ.":Ship.Brake?"ТОРМОЖЕНИЕ":Ship.Boost?"УСКОРЕНИЕ":Ship.AssistOn?"СТАБИЛИЗАЦИЯ ВКЛ.":"СВОБОДНАЯ ИНЕРЦИЯ";
+            NavigationText.text=Route.Completed?"СВОБОДНЫЙ ПОЛЁТ":$"{Route.Distance:0} м";
+            RouteText.text=Route.Completed?"МАРШРУТ ПРОЙДЕН":$"МАЯК {Route.Current+1} / {Route.Gates.Length}";
+            Vector3 target=Ship.transform.InverseTransformPoint(Route.Target);
+            float heading=Mathf.Atan2(target.x,target.z)*Mathf.Rad2Deg;
+            float elevation=Mathf.Atan2(target.y,new Vector2(target.x,target.z).magnitude)*Mathf.Rad2Deg;
+            GuidanceText.text=Route.Completed?"ЧЕТЫРЕ МАЯКА · ГОТОВО":
+                $"{(Mathf.Abs(heading)<4?"ПО КУРСУ":heading>0?"ВПРАВО":"ВЛЕВО")}  {Mathf.Abs(heading):0}°\n"+
+                $"{(Mathf.Abs(elevation)<3?"ПО ВЫСОТЕ":elevation>0?"ВЫШЕ":"НИЖЕ")}  {Mathf.Abs(elevation):0}°";
+            StatusText.text=!Ship.ControlsEnabled?"ПОЛЁТ ПРИОСТАНОВЛЕН":Ship.Hull<=0?"КОРПУС РАЗРУШЕН":Ship.Hull<35?"ПОВРЕЖДЕНИЕ КОРПУСА":!Ship.EngineOn?"ДВИГАТЕЛЬ ВЫКЛ.":Ship.Brake?"ТОРМОЖЕНИЕ":Ship.Boost?"УСКОРЕНИЕ":"СИСТЕМЫ В НОРМЕ";
+            StatusText.color=Ship.Hull<35?new Color(1,.42f,.21f):new Color(.62f,.89f,.88f);
+            bool desktop=Interaction.Input && !Interaction.Input.IsVr;
+            InteractionText.text=!Ship.ControlsEnabled?(desktop?"ESC · ПРОДОЛЖИТЬ":"КНОПКА МЕНЮ · ПРОДОЛЖИТЬ"):
+                Ship.Hull<=0?(desktop?"BACKSPACE · НОВЫЙ ВЫЛЕТ":"ТРЕБУЕТСЯ ПЕРЕЗАПУСК"):
+                desktop && Interaction.Input.CockpitPointer?Interaction.Hint:
+                !Ship.EngineOn?(desktop?"I / ENGINE · ВКЛЮЧИТЬ":"ПЕРЕКЛЮЧАТЕЛЬ ENGINE"):
+                desktop?"TAB · ПРИБОРЫ    H · СПРАВКА":"ПРЯМОЕ УПРАВЛЕНИЕ";
             Vector3 angle=Ship.transform.eulerAngles;
             AttitudeText.text=$"P {Mathf.DeltaAngle(0,angle.x):+000;-000;000}   Y {angle.y:000}\nR {Mathf.DeltaAngle(0,angle.z):+000;-000;000}";
-            CombinerText.text=$"VEL {Ship.Speed:000.0}      {(Ship.EngineOn?"ENG ON":"ENG OFF")}      {(Ship.AssistOn?"SAS":"DRIFT")}\n"+(Route.Completed?"KEPLER / FREE FLIGHT":$"NAV {Route.Current+1:00}     {Route.Distance:0000} M");
             float[] axes={Ship.Translation.x,Ship.Translation.y,Ship.Rotation.z};
             for(int i=0;i<3;i++)AxisIndicators[i].anchoredPosition=new Vector2(axes[i]*107,90-i*78);
         }

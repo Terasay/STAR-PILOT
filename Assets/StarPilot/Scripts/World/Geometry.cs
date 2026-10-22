@@ -114,19 +114,27 @@ namespace StarPilot
         {
             const int rings=48,sides=40;
             var vertices=new Vector3[(rings+1)*(sides+1)];var triangles=new List<int>();
+            var colors=new Color[vertices.Length];
             for(int row=0;row<=rings;row++)for(int col=0;col<=sides;col++)
             {
                 float t=row/(float)rings,a=col*2*Mathf.PI/sides;
                 float envelope=Mathf.Sin(t*Mathf.PI);
-                float fold=.004f*Mathf.Sin(t*72+Mathf.Sin(a*3)*1.7f)*envelope*envelope;
-                float radius=Mathf.Lerp(.082f,.055f,t)+.009f*envelope+fold;
+                float fold=.005f*Mathf.Sin(t*91+Mathf.Sin(a*3)*2.5f)*envelope*envelope;
+                fold+=.002f*Mathf.Sin(t*143-a*4)*Mathf.Pow(Mathf.Sin(t*Mathf.PI),3);
+                float radius=Mathf.Lerp(.065f,.038f,t)+.006f*envelope+fold;
+                float seam=Mathf.Exp(-Mathf.Pow(Mathf.DeltaAngle(a*Mathf.Rad2Deg,48)/5,2))+
+                    Mathf.Exp(-Mathf.Pow(Mathf.DeltaAngle(a*Mathf.Rad2Deg,132)/5,2));
+                radius+=seam*.0008f;
                 int index=row*(sides+1)+col;
                 vertices[index]=new Vector3(Mathf.Cos(a)*radius,Mathf.Sin(a)*radius*.91f,t-.5f);
+                float cuff=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.92f,.96f,t));
+                float shade=Mathf.Lerp(1,.5f,cuff)*(1-seam*.15f);
+                colors[index]=new Color(shade,shade,shade,1);
                 if(row==rings || col==sides)continue;
                 int next=index+sides+1;
                 triangles.AddRange(new[]{index,index+1,next,index+1,next+1,next});
             }
-            var mesh=new Mesh{name="Tailored sleeve / gathered fabric",vertices=vertices,triangles=triangles.ToArray()};
+            var mesh=new Mesh{name="Tailored sleeve / gathered fabric",vertices=vertices,colors=colors,triangles=triangles.ToArray()};
             mesh.RecalculateNormals();var normals=mesh.normals;
             for(int row=0;row<=rings;row++){int first=row*(sides+1),last=first+sides;normals[first]=normals[last]=(normals[first]+normals[last]).normalized;}
             mesh.normals=normals;mesh.RecalculateBounds();owned.Add(mesh);

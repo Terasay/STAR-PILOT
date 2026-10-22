@@ -62,6 +62,18 @@ namespace StarPilot
             Demo.Hud.SetMenu(false);Demo.Input.enabled=false;
             var ship=Demo.Ship;
             CheckResult("Scene initialized",Demo.Route.Gates.Length==4 && Camera.main==Demo.PilotCamera,"4 gates, pilot camera, live cockpit");
+            CheckResult("Unobstructed first-person view",Demo.Hud.FlightOverlayHidden && Demo.Hud.DesktopCanvas.GetComponentsInChildren<UnityEngine.UI.Graphic>().Length==0,
+                "No active screen-space text, reticle, objective marker or impact overlay during flight");
+            var displays=ship.GetComponent<CockpitDisplays>();
+            yield return new WaitForSecondsRealtime(.15f);
+            CheckResult("Navigation on physical instrument",displays.RouteText.text.Contains("1 / 4") && displays.NavigationText.text.Contains("м") &&
+                displays.GuidanceText.GetComponentInParent<Canvas>().renderMode==RenderMode.WorldSpace,"Gate, range and course guidance belong to the cockpit screen");
+            ship.Body.rotation=Quaternion.Euler(0,180,0);yield return Steps(2);yield return new WaitForSecondsRealtime(.15f);
+            CheckResult("Instrument guides to a target behind the ship",displays.GuidanceText.text.Contains("180°"),displays.GuidanceText.text);
+            ship.Body.rotation=Quaternion.identity;yield return Steps(2);
+            Demo.Hud.SetMenu(true);yield return new WaitForSecondsRealtime(.15f);
+            CheckResult("Pause is visible on the cockpit display",displays.StatusText.text.Contains("ПРИОСТАНОВЛЕН"),"Physical status display announces pause, including when the desktop menu is hidden in VR");
+            Demo.Hud.SetMenu(false);
             ship.Translation=Vector3.forward;
             yield return Steps(100);
             CheckResult("Forward thrust",ship.ForwardSpeed>20f && ship.ForwardSpeed<26f,$"velocity {ship.ForwardSpeed:F2} m/s");
@@ -126,6 +138,14 @@ namespace StarPilot
             CheckResult("Desktop without XR tracking",!Demo.Cockpit.TryHandPose(-1,out _,out _,out _),"No headset required; tracked hands are not fabricated");
             var hands=ship.GetComponent<PilotHands>();
             CheckResult("Pilot hands at controls",Vector3.Distance(hands.Right.position,hands.RightRest.position)<.01f && Vector3.Distance(hands.Left.position,hands.LeftRest.position)<.01f,"Both visible glove rigs follow the control grip poses");
+            var glove=hands.Left.GetComponent<SkinnedMeshRenderer>();
+            var beforeSkin=new Mesh();var afterSkin=new Mesh();glove.BakeMesh(beforeSkin);
+            var fingerJoint=hands.LeftFingers[1].GetChild(0);Quaternion previousJoint=fingerJoint.localRotation;
+            fingerJoint.localRotation*=Quaternion.Euler(25,0,0);glove.BakeMesh(afterSkin);fingerJoint.localRotation=previousJoint;
+            var original=beforeSkin.vertices;var bent=afterSkin.vertices;int moved=0;
+            for(int vertex=0;vertex<original.Length;vertex++)if(Vector3.Distance(original[vertex],bent[vertex])>.0005f)moved++;
+            CheckResult("Glove fabric follows finger joints",moved>50,$"{moved} cloth vertices deform at the middle finger joint");
+            Destroy(beforeSkin);Destroy(afterSkin);
             var lighting=ship.GetComponent<ShipLighting>();
             InputSystem.QueueStateEvent(testKeyboard,new KeyboardState(Key.L));yield return null;yield return null;
             CheckResult("Keyboard headlights",!lighting.HeadlightsOn && !lighting.Headlights[0].enabled,"L switches both exterior floodlights off");
@@ -143,6 +163,7 @@ namespace StarPilot
             Demo.ResetFlight();ship.ToggleEngine();
             yield return Steps(5);
             ship.Translation=Vector3.forward;yield return Steps(30);ship.Translation=Vector3.zero;
+            yield return new WaitForSecondsRealtime(.35f);
             CaptureFrame("02-cockpit.png");
             Demo.PilotCamera.transform.localRotation=Quaternion.Euler(27,-22,0);
             CaptureFrame("03-controls.png");
@@ -150,6 +171,30 @@ namespace StarPilot
             CaptureFrame("04-space.png");
             Demo.PilotCamera.transform.localRotation=Quaternion.Euler(-23,0,0);
             CaptureFrame("05-overhead.png");
+            Vector3 cameraPosition=Demo.PilotCamera.transform.localPosition;
+            Demo.PilotCamera.transform.position=hands.Left.position+ship.transform.TransformDirection(new Vector3(.1f,.28f,-.22f));
+            Demo.PilotCamera.transform.LookAt(hands.Left.position,ship.transform.up);
+            CaptureFrame("08-glove-detail.png");
+            Demo.PilotCamera.transform.localPosition=cameraPosition;
+            // Inspect the open bind pose independently of grip occlusion; no XR tracking is fabricated.
+            Demo.PilotCamera.transform.localRotation=Quaternion.identity;
+            hands.enabled=false;
+            Vector3 handPosition=hands.Left.position;Quaternion handRotation=hands.Left.rotation;
+            var rotations=new Quaternion[glove.bones.Length];var bind=glove.sharedMesh.bindposes;
+            for(int b=1;b<glove.bones.Length;b++)
+            {
+                rotations[b]=glove.bones[b].localRotation;
+                int parent=Array.IndexOf(glove.bones,glove.bones[b].parent);
+                glove.bones[b].localRotation=(bind[parent]*bind[b].inverse).rotation;
+            }
+            hands.Left.position=Demo.PilotCamera.transform.TransformPoint(new Vector3(-.08f,-.015f,.42f));
+            hands.Left.rotation=Demo.PilotCamera.transform.rotation*Quaternion.Euler(-90,0,-12);
+            hands.LeftArm.gameObject.SetActive(false);
+            yield return null;
+            CaptureFrame("09-glove-open.png");
+            hands.LeftArm.gameObject.SetActive(true);hands.Left.SetPositionAndRotation(handPosition,handRotation);
+            for(int b=1;b<glove.bones.Length;b++)glove.bones[b].localRotation=rotations[b];
+            hands.enabled=true;
             ship.Translation=Vector3.zero;ship.Body.linearVelocity=Vector3.zero;
             var asteroid=GameObject.Find("Asteroid 0").transform;
             Demo.PilotCamera.transform.rotation=Quaternion.LookRotation(asteroid.position-Demo.PilotCamera.transform.position,ship.transform.up);

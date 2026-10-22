@@ -15,12 +15,10 @@ namespace StarPilot
         public Camera PilotCamera;
         Canvas canvas;
         public Canvas DesktopCanvas => canvas;
-        GameObject menu, help, flightInfo;
-        Text status, telemetry, objective, modeLabel, menuTitle, message;
-        RectTransform targetMarker;
-        Image flash;
+        GameObject menu, help;
+        Text menuTitle, message;
         bool started;
-        float nextRefresh;
+        public bool FlightOverlayHidden => !menu.activeSelf && !help.activeSelf;
         static readonly Color Ink = new Color(.7f,.81f,.86f);
         static readonly Color Cyan = new Color(.32f,.88f,.94f);
 
@@ -35,25 +33,12 @@ namespace StarPilot
                 var events=new GameObject("Input events",typeof(EventSystem),typeof(InputSystemUIInputModule));
                 events.transform.SetParent(transform,false);
             }
-            modeLabel=Label(canvas.transform,"Mode", "",13,Ink,new Vector2(695,495),new Vector2(400,24),TextAnchor.MiddleRight);
-            flightInfo=new GameObject("Flight information",typeof(RectTransform));flightInfo.transform.SetParent(canvas.transform,false);
-            Label(flightInfo.transform,"Flight ID","SP–01    /    KEPLER APPROACH",14,Ink,new Vector2(-660,495),new Vector2(460,25));
-            CockpitDisplays.Rect(flightInfo.transform,"ID rule",new Vector2(-754,473),new Vector2(270,1),new Color(.2f,.6f,.66f,.45f));
-            status=Label(flightInfo.transform,"Status","",15,Cyan,new Vector2(-655,-492),new Vector2(480,30),TextAnchor.MiddleLeft);
-            telemetry=Label(flightInfo.transform,"Interaction hint","",16,Cyan,new Vector2(0,-444),new Vector2(740,40),TextAnchor.MiddleCenter);
-            Label(flightInfo.transform,"Hint","L  фары  ·  C  свет  ·  TAB  панель  ·  ALT  обзор  ·  H  помощь",14,Ink,new Vector2(530,-492),new Vector2(720,30),TextAnchor.MiddleRight);
-            objective=Label(flightInfo.transform,"Objective","",16,Ink,new Vector2(-675,403),new Vector2(430,65));
-            var marker=Panel(flightInfo.transform,"Target",Vector2.zero,new Vector2(34,34),new Color(0,0,0,0));targetMarker=marker.GetComponent<RectTransform>();
-            Label(marker.transform,"Diamond","◇",39,Cyan,Vector2.zero,new Vector2(46,46),TextAnchor.MiddleCenter);
-
-            flash=CockpitDisplays.Rect(canvas.transform,"Impact flash",Vector2.zero,new Vector2(4000,2500),new Color(1,.12f,.04f,0));
-
             menu=Panel(canvas.transform,"Flight menu",new Vector2(500,-15),new Vector2(660,705),new Color(.009f,.021f,.031f,.96f));
             CockpitDisplays.Rect(menu.transform,"Accent",new Vector2(-327,0),new Vector2(3,705),Cyan);
-            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 3",15,Cyan,new Vector2(0,300),new Vector2(555,35));
+            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 4",15,Cyan,new Vector2(0,300),new Vector2(555,35));
             menuTitle=Label(menu.transform,"Title","Орбита Кеплера",43,Color.white,new Vector2(0,240),new Vector2(555,70));
-            Label(menu.transform,"Intro","SP–01 готов к вылету.\nПройди четыре навигационных маяка\nи почувствуй корабль в свободном полёте.",21,Ink,new Vector2(0,140),new Vector2(555,110));
-            Label(menu.transform,"Controls summary","W / S   тяга     ·     Мышь   поворот\nA / D   вбок      ·     R / F   вверх / вниз\nПробел   тормоз   ·   Shift   ускорение",19,Ink,new Vector2(0,20),new Vector2(555,100));
+            Label(menu.transform,"Intro","SP–01 готов к вылету. Четыре маяка.\nСкорость — слева, маршрут — в центре,\nсостояние корабля — справа. Всё на приборах.",21,Ink,new Vector2(0,140),new Vector2(555,110));
+            Label(menu.transform,"Controls summary","W / S  тяга   ·   Мышь  поворот   ·   Пробел  тормоз\nAlt + мышь  обзор   ·   Tab + ЛКМ  приборы\nH  справка   ·   Escape  пауза",19,Ink,new Vector2(0,20),new Vector2(555,100));
             Button(menu.transform,"НАЧАТЬ / ПРОДОЛЖИТЬ",new Vector2(0,-95),()=>SetMenu(false),true);
             Button(menu.transform,"ЗАПУСТИТЬ В VR",new Vector2(0,-167),()=>Demo.RequestVr(),false);
             Button(menu.transform,"ВЕРНУТЬСЯ К СТАРТУ",new Vector2(0,-239),()=>{Demo.ResetFlight();SetMenu(false);},false);
@@ -76,7 +61,7 @@ namespace StarPilot
             Label(help.transform,"Physics note","Стабилизация плавно гасит движение.\nОтключи её клавишей T, чтобы лететь по инерции.\nТормоз и двигатели работают при включённом питании.",18,Cyan,new Vector2(0,-265),new Vector2(650,100));
             help.SetActive(false);
             Input.MenuRequested=()=>SetMenu(!Input.InMenu);
-            Input.HelpRequested=()=>help.SetActive(!help.activeSelf);
+            Input.HelpRequested=()=> { if(!Input.IsVr)help.SetActive(!help.activeSelf); };
             Input.ResetRequested=Demo.ResetFlight;
             SetMenu(true);
         }
@@ -86,7 +71,7 @@ namespace StarPilot
             Input.InMenu=visible;Ship.ControlsEnabled=!visible;
             Time.timeScale=visible?0f:1f;
             Input.CaptureCursor(!visible);
-            menu.SetActive(visible);flightInfo.SetActive(!visible);
+            menu.SetActive(visible);
             help.SetActive(false);
             if(!visible && !started)
             {
@@ -103,16 +88,6 @@ namespace StarPilot
         {
             var kb=Keyboard.current;
             if(Input.InMenu && kb!=null && kb.enterKey.wasPressedThisFrame)SetMenu(false);
-            if(Time.unscaledTime<nextRefresh)return;nextRefresh=Time.unscaledTime+.05f;
-            status.text=Ship.Hull<=0?"КОРПУС РАЗРУШЕН  ·  BACKSPACE":Ship.EngineOn?(Ship.Brake?"ТОРМОЖЕНИЕ":"ДВИГАТЕЛЬ РАБОТАЕТ"):"ДВИГАТЕЛЬ ВЫКЛЮЧЕН  ·  I";
-            telemetry.text=Demo.Cockpit.Hint;
-            objective.text=Route.Completed?"МАРШРУТ ПРОЙДЕН\nСвободный полёт · Backspace — повторить":$"УЧЕБНЫЙ МАРШРУТ\nМаяк {Route.Current+1:00} / 04    ·    {Route.Distance:0} м";
-            modeLabel.text=Input.IsVr?"OPENXR  /  SEATED FLIGHT":"DESKTOP  /  "+(Ship.AssistOn?"ASSISTED FLIGHT":"INERTIAL FLIGHT");
-            Vector3 viewport=PilotCamera.WorldToViewportPoint(Route.Target);
-            targetMarker.gameObject.SetActive(!Route.Completed && viewport.z>0 && viewport.x>.05f && viewport.x<.95f && viewport.y>.12f && viewport.y<.88f);
-            var rect=canvas.GetComponent<RectTransform>();
-            targetMarker.anchoredPosition=new Vector2((viewport.x-.5f)*rect.rect.width,(viewport.y-.5f)*rect.rect.height);
-            flash.color=new Color(1,.12f,.04f,Demo.Audio?Demo.Audio.ImpactFlash*.3f:0);
         }
 
         static GameObject Panel(Transform parent,string name,Vector2 position,Vector2 size,Color color)=>CockpitDisplays.Rect(parent,name,position,size,color).gameObject;

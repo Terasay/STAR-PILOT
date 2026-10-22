@@ -30,21 +30,22 @@ namespace StarPilot
                 v.AddVert(Vector2.zero,background,Vector2.zero);v.AddVert(Polar(216,i*3.75f),background,Vector2.zero);
                 v.AddVert(Polar(216,(i+1)*3.75f),background,Vector2.zero);v.AddTriangle(n,n+1,n+2);
             }
-            for(int r=38;r<=152;r+=38)Arc(v,Vector2.zero,r,0,360,2,Dim);
-            Line(v,new Vector2(-155,0),new Vector2(155,0),1.8f,Dim);Line(v,new Vector2(0,-155),new Vector2(0,155),1.8f,Dim);
-            Arc(v,Vector2.zero,160,0,360,2,Cyan);
-            for(int i=0;i<72;i++){float a=i*5;Line(v,Polar(163,a),Polar(i%6==0?173:167,a),i%6==0?2:1,i%6==0?Pale:Dim);}
-            Arc(v,Vector2.zero,180,35,140,4,Cyan);Arc(v,Vector2.zero,180,215,320,4,Cyan);
+            Vector2 center=new Vector2(0,52);
+            for(int r=28;r<=112;r+=28)Arc(v,center,r,0,360,2,Dim);
+            Line(v,center+new Vector2(-113,0),center+new Vector2(113,0),1.8f,Dim);Line(v,center+new Vector2(0,-113),center+new Vector2(0,113),1.8f,Dim);
+            Arc(v,center,114,0,360,2,Cyan);
+            for(int i=0;i<48;i++){float a=i*7.5f;Line(v,center+Polar(117,a),center+Polar(i%4==0?124:120,a),i%4==0?2:1,i%4==0?Pale:Dim);}
             for(int i=Route.Current;i<Route.Gates.Length;i++)
             {
                 Vector3 p=Ship.transform.InverseTransformPoint(Route.Gates[i].position);
-                Vector2 mark=Vector2.ClampMagnitude(new Vector2(p.x,p.z)*.22f,140);
-                Arc(v,mark,i==Route.Current?6:3,0,360,2,i==Route.Current?Amber:Dim);
+                Vector2 mark=center+Vector2.ClampMagnitude(new Vector2(p.x,p.z)*.18f,100);
+                if(i==Route.Current)Line(v,center,mark,2,new Color(.4f,.25f,.1f));
+                Arc(v,mark,i==Route.Current?9:4,0,360,3,i==Route.Current?Amber:Dim);
             }
-            Line(v,new Vector2(-10,-8),new Vector2(0,13),2,Pale);Line(v,new Vector2(0,13),new Vector2(10,-8),2,Pale);
-            Line(v,new Vector2(-10,-8),new Vector2(0,-3),2,Pale);Line(v,new Vector2(10,-8),new Vector2(0,-3),2,Pale);
+            Line(v,center+new Vector2(-10,-8),center+new Vector2(0,13),2,Pale);Line(v,center+new Vector2(0,13),center+new Vector2(10,-8),2,Pale);
+            Line(v,center+new Vector2(-10,-8),center+new Vector2(0,-3),2,Pale);Line(v,center+new Vector2(10,-8),center+new Vector2(0,-3),2,Pale);
             // A rotating scan is deliberately slow; stars and the outside world have no twinkle animation.
-            float sweep=Time.time*18f;Line(v,Vector2.zero,Polar(150,sweep),1,new Color(.12f,.65f,.65f,.45f));
+            float sweep=Time.time*18f;Line(v,center,center+Polar(108,sweep),1,new Color(.12f,.65f,.65f,.35f));
         }
         void Velocity(VertexHelper v)
         {
@@ -69,9 +70,9 @@ namespace StarPilot
             for(int i=1;i<p.Length;i++)Line(v,c+p[i-1],c+p[i],2,Cyan);
             Line(v,c+new Vector2(-8,-48),c+new Vector2(-8,-65-Ship.Thrust*15),4,Ship.EngineOn?Amber:Dim);
             Line(v,c+new Vector2(8,-48),c+new Vector2(8,-65-Ship.Thrust*15),4,Ship.EngineOn?Amber:Dim);
-            for(int row=0;row<4;row++)for(int i=0;i<10;i++)
+            for(int row=0;row<3;row++)for(int i=0;i<10;i++)
             {bool on=row==0?Ship.EngineOn:row==1?Ship.AssistOn:row==2?i<Ship.Hull/10:!Ship.Brake;
-                Line(v,new Vector2(35+i*18,80-row*48),new Vector2(45+i*18,80-row*48),6,on?(row==2?Cyan:Amber):Dim);}
+                Line(v,new Vector2(35+i*18,80-row*55),new Vector2(45+i*18,80-row*55),7,on?(row==2?Cyan:Amber):Dim);}
         }
         void Attitude(VertexHelper v)
         {

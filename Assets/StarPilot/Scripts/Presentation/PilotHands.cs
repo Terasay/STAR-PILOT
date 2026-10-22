@@ -1,96 +1,55 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace StarPilot
 {
-    /// <summary>Original articulated suit gloves. The same model follows the controls or tracked controllers.</summary>
+    /// <summary>Continuous cloth gloves, three joints per digit, shared by desktop and tracked controllers.</summary>
     public sealed class PilotHands : MonoBehaviour
     {
         public CockpitInteraction Interaction;
-        public Transform Left, Right, LeftArm, RightArm, LeftRest, RightRest;
-        public Transform[] LeftFingers, RightFingers;
+        public Transform Left,Right,LeftArm,RightArm,LeftRest,RightRest;
+        public Transform[] LeftFingers,RightFingers;
+        PressureGlove leftGlove,rightGlove;
+        readonly List<Mesh> meshes=new List<Mesh>();
         public void Build(Geometry g,Transform cockpit,Material suit,Material rubber,Material metal,Material light)
         {
-            var leather=g.Material("Gloves / textured ivory leather",new Color(.20f,.24f,.22f),0,.32f);
-            g.DetailMaterial(leather,"leather_white",6.5f,.9f);
-            Left=Glove(g,cockpit,-1,leather,rubber,metal,light,out LeftFingers);
-            Right=Glove(g,cockpit,1,leather,rubber,metal,light,out RightFingers);
-            LeftArm=Arm(g,cockpit,suit,rubber,metal,light);RightArm=Arm(g,cockpit,suit,rubber,metal,light);
+            var fabric=g.Material("Gloves / matte woven protective fabric",new Color(.26f,.245f,.205f),0,.08f);
+            g.DetailMaterial(fabric,"cotton_jersey",9,1.15f);
+            fabric.SetFloat("_VertexTint",1);
+            fabric.SetFloat("_Fabric",1);
+            leftGlove=new PressureGlove(cockpit,-1,fabric,meshes);
+            rightGlove=new PressureGlove(cockpit,1,fabric,meshes);
+            Left=leftGlove.Root;Right=rightGlove.Root;
+            LeftFingers=leftGlove.Fingers;RightFingers=rightGlove.Fingers;
+            LeftArm=Arm(g,cockpit,suit,rubber);RightArm=Arm(g,cockpit,suit,rubber);
         }
-        static Transform Glove(Geometry g,Transform parent,int side,Material suit,Material rubber,Material metal,Material light,out Transform[] fingers)
+        static Transform Arm(Geometry g,Transform parent,Material suit,Material rubber)
         {
-            var hand=new GameObject(side<0?"Left pilot glove":"Right pilot glove").transform;hand.SetParent(parent,false);
-            var palm=g.Sphere("Pressure glove / palm",hand,Vector3.zero,new Vector3(.115f,.07f,.155f),suit);g.RefineSphere(palm,48,32);
-            var back=g.Sphere("Padded glove back",hand,new Vector3(0,.025f,-.006f),new Vector3(.112f,.044f,.123f),suit);g.RefineSphere(back,48,32);
-            g.Panel("Glove reinforcement",hand,new Vector3(0,.045f,-.016f),new Vector3(.071f,.012f,.07f),metal,new Vector3(8,0,0),.018f);
-            g.Sphere("Wrist seal",hand,new Vector3(0,0,-.105f),new Vector3(.115f,.074f,.07f),rubber);
-            var cuff=g.Torus("Pressure cuff coupling",hand,new Vector3(0,0,-.11f),.056f,.008f,metal,48);cuff.transform.localScale=new Vector3(1,.7f,1);
-            for(int j=0;j<8;j++)
-            {
-                float a=j*Mathf.PI/4;
-                g.Panel("Coupling lock",hand,new Vector3(Mathf.Cos(a)*.058f,Mathf.Sin(a)*.042f,-.11f),new Vector3(.013f,.011f,.021f),rubber,new Vector3(0,0,j*45),.003f);
-            }
-            g.Panel("Wrist instrument",hand,new Vector3(0,.04f,-.105f),new Vector3(.09f,.025f,.06f),metal,default,.018f);
-            g.Box("Wrist life support",hand,new Vector3(0,.05f,-.105f),new Vector3(.07f,.008f,.03f),rubber);
-            for(int j=0;j<3;j++)g.Box("Wrist indicator",hand,new Vector3(-.022f+j*.022f,.055f,-.105f),new Vector3(.012f,.004f,.019f),light);
-            for(int sideSeam=-1;sideSeam<=1;sideSeam+=2)
-            {
-                g.Beam("Glove stitched seam",hand,new Vector3(sideSeam*.043f,.025f,-.055f),new Vector3(sideSeam*.044f,.025f,.035f),.0018f,metal);
-                for(int stitch=0;stitch<12;stitch++)g.Box("Double seam",hand,new Vector3(sideSeam*.041f,.029f,-.051f+stitch*.007f),new Vector3(.006f,.001f,.001f),rubber);
-            }
-            fingers=new Transform[5];
-            for(int j=0;j<4;j++)
-            {
-                var joint=new GameObject("Finger "+j+" / flexion").transform;joint.SetParent(hand,false);
-                joint.localPosition=new Vector3((j-1.5f)*.027f,0,.052f);fingers[j]=joint;
-                float length=j==0?.044f:j==3?.039f:.05f;
-                g.Sphere("Knuckle",joint,Vector3.zero,new Vector3(.029f,.034f,.034f),suit);
-                g.Sphere("Padded knuckle guard",joint,new Vector3(0,.016f,.003f),new Vector3(.026f,.012f,.027f),metal);
-                var finger=g.Sphere("Proximal finger",joint,new Vector3(0,0,length*.5f),new Vector3(.026f,.032f,length+.016f),suit);g.RefineSphere(finger,32,20);
-                var tip=new GameObject("Curled finger tip").transform;tip.SetParent(joint,false);tip.localPosition=new Vector3(0,0,length);tip.localRotation=Quaternion.Euler(65,0,0);
-                g.Sphere("Glove fingertip",tip,new Vector3(0,0,.02f),new Vector3(.026f,.031f,.052f),rubber);
-                for(int crease=0;crease<3;crease++)g.Box("Finger flexion crease",joint,new Vector3(0,.016f,length*.5f+crease*.006f),new Vector3(.022f,.002f,.002f),rubber);
-                g.Box("Knuckle seam",joint,new Vector3(0,.018f,.012f),new Vector3(.02f,.003f,.008f),metal);
-            }
-            var thumb=new GameObject("Thumb / flexion").transform;thumb.SetParent(hand,false);thumb.localPosition=new Vector3(-side*.061f,-.008f,0);
-            thumb.localRotation=Quaternion.Euler(20,-side*45,0);fingers[4]=thumb;
-            g.Sphere("Thumb",thumb,new Vector3(0,0,.025f),new Vector3(.035f,.036f,.075f),suit);
-            return hand;
-        }
-        static Transform Arm(Geometry g,Transform parent,Material suit,Material rubber,Material metal,Material light)
-        {
-            var arm=new GameObject("Pressure suit / forearm").transform;arm.SetParent(parent,false);
+            var arm=new GameObject("Pressure suit / tailored forearm").transform;arm.SetParent(parent,false);
             g.PressureSleeve(arm,suit);
-            g.Panel("Forearm armour",arm,new Vector3(0,.073f,.05f),new Vector3(.072f,.012f,.22f),metal,default,.02f);
-            for(int side=-1;side<=1;side+=2)g.Beam("Sleeve piping",arm,new Vector3(side*.058f,.05f,-.33f),new Vector3(side*.038f,.041f,.36f),.0025f,rubber);
-            for(int band=0;band<2;band++)
-            {
-                var ring=g.Torus("Wrist flex seam",arm,new Vector3(0,0,.36f+band*.045f),.067f-band*.002f,.0025f,rubber,48);
-                ring.transform.localScale=new Vector3(1,.91f,1);
-            }
-            var patch=CockpitDisplays.Screen(arm,"Suit identification",new Vector3(0,.081f,.05f),new Vector2(180,170),new Vector3(90,0,0));
-            patch.transform.localScale=Vector3.one*.00032f;
-            var label=CockpitDisplays.Text(patch.transform,"Crew badge","SP-01\nCREW",42,new Color(.78f,.84f,.79f),Vector2.zero,new Vector2(180,170),UnityEngine.TextAnchor.MiddleCenter);
-            label.font=Resources.Load<Font>("StarPilot/Fonts/Rajdhani-Medium");
+            // The sleeve mesh carries its own sewn seams and elastic cuff.
             return arm;
         }
         void LateUpdate()
         {
             if(!Interaction || !Interaction.Input)return;
-            PoseHand(Left,LeftArm,LeftRest,LeftFingers,-1);
-            PoseHand(Right,RightArm,RightRest,RightFingers,1);
+            PoseHand(leftGlove,LeftArm,LeftRest,-1);
+            PoseHand(rightGlove,RightArm,RightRest,1);
         }
-        void PoseHand(Transform hand,Transform arm,Transform rest,Transform[] fingers,int side)
+        void PoseHand(PressureGlove glove,Transform arm,Transform rest,int side)
         {
             bool vr=Interaction.Input.IsVr;
             bool tracked=Interaction.TryHandPose(side,out Vector3 p,out Quaternion q,out float grip);
+            var hand=glove.Root;
             hand.gameObject.SetActive(!vr || tracked);arm.gameObject.SetActive(!vr || tracked);
-            if(vr && tracked){hand.SetPositionAndRotation(p,q*Quaternion.Euler(25,0,0));}
-            else {hand.SetPositionAndRotation(rest.position,rest.rotation);grip=.8f;}
-            for(int i=0;i<4;i++)fingers[i].localRotation=Quaternion.Euler(Mathf.Lerp(-8,68,grip),0,0);
+            if(vr && tracked)hand.SetPositionAndRotation(p,q*Quaternion.Euler(25,0,0));
+            else {hand.SetPositionAndRotation(rest.position,rest.rotation);grip=side<0?.70f:.83f;}
+            glove.Pose(grip);
             Vector3 elbow=transform.TransformPoint(new Vector3(side*.36f,.78f,-.05f));
-            Vector3 wrist=hand.TransformPoint(new Vector3(0,0,-.13f));
+            Vector3 wrist=hand.TransformPoint(new Vector3(0,0,-.091f));
             arm.position=(elbow+wrist)*.5f;arm.rotation=Quaternion.LookRotation(wrist-elbow,transform.up);
-            arm.localScale=new Vector3(1,1,Vector3.Distance(elbow,wrist));
+            arm.localScale=new Vector3(.95f,.95f,Vector3.Distance(elbow,wrist));
         }
+        void OnDestroy(){foreach(var mesh in meshes)if(mesh)Destroy(mesh);}
     }
 }
