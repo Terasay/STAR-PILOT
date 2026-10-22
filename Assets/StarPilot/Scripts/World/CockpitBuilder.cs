@@ -15,7 +15,7 @@ namespace StarPilot
         public void Build(Transform ship,CockpitDisplays displays)
         {
             face=g.Material("Anodised instrument face",new Color(.19f,.23f,.25f),.35f,.46f);
-            suit=g.Material("Pilot / woven pressure suit",new Color(.57f,.61f,.57f),0,.28f);
+            suit=g.Material("Pilot / woven pressure suit",new Color(.19f,.24f,.23f),0,.24f);
             gripRubber=g.Material("Micrograin grip rubber",new Color(.085f,.105f,.11f),.04f,.32f);
             g.DetailMaterial(gripRubber,"leather_white",7,.75f);
             g.DetailMaterial(face,"blue_metal_plate",2.4f,.5f);
@@ -199,10 +199,14 @@ namespace StarPilot
         {
             var cabin=new System.Collections.Generic.List<Light>();
             cabin.Add(g.Lamp("Ceiling work light",cockpit,new Vector3(0,2.17f,.4f),new Color(.88f,.93f,1),4.6f,4));
+            cabin[0].type=LightType.Spot; cabin[0].spotAngle=150; cabin[0].innerSpotAngle=110;
+            cabin[0].transform.localRotation=Quaternion.Euler(90,0,0);
+            cabin[0].shadows=LightShadows.Soft; cabin[0].shadowStrength=.55f; cabin[0].shadowNearPlane=.08f;
             cabin.Add(g.Lamp("Instrument face wash",cockpit,new Vector3(0,1.7f,-.35f),new Color(.87f,.93f,1),2.4f,3.2f));
             cabin.Add(g.Lamp("Port console practical",cockpit,new Vector3(-1.04f,1.32f,.25f),new Color(.53f,.8f,1),1.9f,2.4f));
             cabin.Add(g.Lamp("Starboard console practical",cockpit,new Vector3(1.04f,1.32f,.25f),new Color(1,.81f,.62f),1.9f,2.4f));
             var exterior=new System.Collections.Generic.List<Light>();
+            var lenses=new System.Collections.Generic.List<Renderer>();
             for(int side=-1;side<=1;side+=2)
             {
                 var light=new GameObject("Forward floodlight / "+side,typeof(Light)).GetComponent<Light>();
@@ -213,8 +217,9 @@ namespace StarPilot
                 light.shadows=LightShadows.Soft;light.shadowStrength=.75f;light.shadowNearPlane=.3f;
                 exterior.Add(light);
                 g.Panel("Floodlight housing",cockpit,light.transform.localPosition,new Vector3(.24f,.14f,.12f),hull,default,.04f);
-                g.Panel("Floodlight lens",cockpit,light.transform.localPosition+Vector3.forward*.065f,new Vector3(.19f,.09f,.01f),white,default,.025f);
+                lenses.Add(g.Panel("Floodlight lens",cockpit,light.transform.localPosition+Vector3.forward*.065f,new Vector3(.19f,.09f,.01f),white,default,.025f).GetComponent<Renderer>());
             }
+            lighting.HeadlightLenses=lenses.ToArray();lighting.LensOn=white;lighting.LensOff=dark;
             lighting.Configure(cabin.ToArray(),exterior.ToArray());
         }
         Canvas Monitor(Transform parent,string title,Vector3 position,Vector2 size,Vector3 euler)

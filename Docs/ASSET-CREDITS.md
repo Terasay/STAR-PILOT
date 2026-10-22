@@ -26,10 +26,14 @@ NASA не является партнёром проекта и не одобр�
 
 ## Кабина и обшивка
 
-Дополнительные материалы кабины и перчаток: **Blue Metal Plate** и **Leather White**, Rob Tuytel / Poly Haven, CC0. Карты diffuse, normal GL и roughness в 1024 × 1024; цвет меняется материалами игры.
+Дополнительные материалы кабины и перчаток: **Blue Metal Plate** и **Leather White**, Rob Tuytel / Poly Haven, CC0. Карты diffuse, normal GL и roughness в 2048 × 2048; цвет меняется материалами игры.
 
 - https://polyhaven.com/a/blue_metal_plate
 - https://polyhaven.com/a/leather_white
+
+Рукава скафандра: **Cotton Jersey**, colormass (съёмка), Rico Cilliers (обработка) / Poly Haven, CC0. Карты diffuse, normal GL и roughness, вариант 2K; ткань накладывается на собственную геометрию складок.
+
+- https://polyhaven.com/a/cotton_jersey
 
 ## Шрифт приборов
 

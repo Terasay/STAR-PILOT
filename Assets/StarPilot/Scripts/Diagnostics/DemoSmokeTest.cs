@@ -11,6 +11,7 @@ using UnityEngine.Rendering.Universal;
 namespace StarPilot
 {
     /// <summary>Opt-in integration checks in an actual Windows player, including rendered screenshots.</summary>
+    [DefaultExecutionOrder(-50)]
     public sealed class DemoSmokeTest : MonoBehaviour
     {
         public DemoBootstrap Demo;
@@ -22,8 +23,23 @@ namespace StarPilot
             public List<string> errors=new List<string>();
         }
         readonly Report report=new Report();
+        Keyboard injectedKeyboard;
+        Mouse injectedMouse;
+        InputSettings.BackgroundBehavior previousBackgroundBehavior;
         string output;
-        void Awake() { Application.logMessageReceived+=OnLog; }
+        void Awake()
+        {
+            Application.logMessageReceived+=OnLog;
+            previousBackgroundBehavior=InputSystem.settings.backgroundBehavior;
+            InputSystem.settings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;
+        }
+        void Update()
+        {
+            // Keep this player's injected devices current while the user works in another window.
+            // The ordinary game never changes background input handling or device selection.
+            if(injectedKeyboard!=null && injectedKeyboard.added)injectedKeyboard.MakeCurrent();
+            if(injectedMouse!=null && injectedMouse.added)injectedMouse.MakeCurrent();
+        }
         void OnLog(string text,string stack,LogType type)
         {
             if(type==LogType.Error || type==LogType.Exception || type==LogType.Assert)report.errors.Add(text+"\n"+stack);
@@ -73,6 +89,7 @@ namespace StarPilot
             CheckResult("Collision damage",ship.Hull<99f,$"hull {ship.Hull:F2}%");Destroy(obstacle);
             Demo.ResetFlight();ship.ToggleEngine();
             var testKeyboard=InputSystem.AddDevice<Keyboard>("StarPilotSmokeKeyboard");
+            injectedKeyboard=testKeyboard;
             Demo.Input.enabled=true;
             InputSystem.QueueStateEvent(testKeyboard,new KeyboardState(Key.W));
             yield return null;yield return Steps(10);
@@ -85,6 +102,7 @@ namespace StarPilot
             yield return null;yield return null;
             CheckResult("Keyboard assist toggle",!ship.AssistOn,"T toggles stabilization");
             var testMouse=InputSystem.AddDevice<Mouse>("StarPilotCockpitMouse");
+            injectedMouse=testMouse;
             var engine=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Engine);
             Vector3 screen=Demo.PilotCamera.WorldToScreenPoint(engine.transform.position);
             InputSystem.QueueStateEvent(testKeyboard,new KeyboardState(Key.Tab));
@@ -119,6 +137,8 @@ namespace StarPilot
             cabinSwitch.Press();
             CheckResult("Overhead lighting switch",lighting.CabinBright && lighting.CabinLights[0].intensity>dimIntensity*3,"Physical overhead rocker restores bright work lights");
             var floodSwitch=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Headlights);floodSwitch.Press();
+            CheckResult("Overhead floodlight switch",lighting.HeadlightsOn,"Physical overhead rocker restores exterior floodlights");
+            lighting.SetHeadlights(true);lighting.SetCabinBright(true);
             InputSystem.RemoveDevice(testKeyboard);Demo.Input.enabled=false;
             Demo.ResetFlight();ship.ToggleEngine();
             yield return Steps(5);
@@ -133,8 +153,10 @@ namespace StarPilot
             ship.Translation=Vector3.zero;ship.Body.linearVelocity=Vector3.zero;
             var asteroid=GameObject.Find("Asteroid 0").transform;
             Demo.PilotCamera.transform.rotation=Quaternion.LookRotation(asteroid.position-Demo.PilotCamera.transform.position,ship.transform.up);
-            lighting.ToggleHeadlights();float unlit=CaptureFrame("06-headlights-off.png");
-            lighting.ToggleHeadlights();float lit=CaptureFrame("07-headlights-on.png");
+            lighting.SetHeadlights(false);yield return new WaitForSecondsRealtime(.15f);
+            float unlit=CaptureFrame("06-headlights-off.png");
+            lighting.SetHeadlights(true);yield return new WaitForSecondsRealtime(.15f);
+            float lit=CaptureFrame("07-headlights-on.png");
             CheckResult("Headlights illuminate geometry",lit>unlit+.025f,$"asteroid centre brightness: off {unlit:F3}; on {lit:F3}");
             Demo.PilotCamera.transform.localRotation=Quaternion.identity;
             yield return new WaitForSecondsRealtime(.5f);
@@ -189,6 +211,6 @@ namespace StarPilot
             Canvas.ForceUpdateCanvases();target.Release();Destroy(target);Destroy(image);
             return centreLuma;
         }
-        void OnDestroy() { Application.logMessageReceived-=OnLog; }
+        void OnDestroy() { Application.logMessageReceived-=OnLog;InputSystem.settings.backgroundBehavior=previousBackgroundBehavior; }
     }
 }

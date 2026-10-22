@@ -10,7 +10,7 @@ namespace StarPilot
         public Transform[] LeftFingers, RightFingers;
         public void Build(Geometry g,Transform cockpit,Material suit,Material rubber,Material metal,Material light)
         {
-            var leather=g.Material("Gloves / textured ivory leather",new Color(.52f,.56f,.52f),0,.37f);
+            var leather=g.Material("Gloves / textured ivory leather",new Color(.20f,.24f,.22f),0,.32f);
             g.DetailMaterial(leather,"leather_white",6.5f,.9f);
             Left=Glove(g,cockpit,-1,leather,rubber,metal,light,out LeftFingers);
             Right=Glove(g,cockpit,1,leather,rubber,metal,light,out RightFingers);
@@ -64,7 +64,7 @@ namespace StarPilot
             for(int side=-1;side<=1;side+=2)g.Beam("Sleeve piping",arm,new Vector3(side*.058f,.05f,-.33f),new Vector3(side*.038f,.041f,.36f),.0025f,rubber);
             for(int band=0;band<2;band++)
             {
-                var ring=g.Torus("Wrist flex seam",arm,new Vector3(0,0,.36f+band*.045f),.059f-band*.002f,.0035f,rubber,48);
+                var ring=g.Torus("Wrist flex seam",arm,new Vector3(0,0,.36f+band*.045f),.067f-band*.002f,.0025f,rubber,48);
                 ring.transform.localScale=new Vector3(1,.91f,1);
             }
             var patch=CockpitDisplays.Screen(arm,"Suit identification",new Vector3(0,.081f,.05f),new Vector2(180,170),new Vector3(90,0,0));

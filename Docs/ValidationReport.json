@@ -6,7 +6,7 @@
         {
             "name": "01-menu.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,588"
+            "detail": "visible sample fraction 0,725"
         },
         {
             "name": "Scene initialized",
@@ -99,24 +99,64 @@
             "detail": "Both visible glove rigs follow the control grip poses"
         },
         {
+            "name": "Keyboard headlights",
+            "passed": true,
+            "detail": "L switches both exterior floodlights off"
+        },
+        {
+            "name": "Keyboard cabin lighting",
+            "passed": true,
+            "detail": "C selects dim cabin mode"
+        },
+        {
+            "name": "Overhead lighting switch",
+            "passed": true,
+            "detail": "Physical overhead rocker restores bright work lights"
+        },
+        {
+            "name": "Overhead floodlight switch",
+            "passed": true,
+            "detail": "Physical overhead rocker restores exterior floodlights"
+        },
+        {
             "name": "Navigation screen unobstructed",
             "passed": true,
-            "detail": "857 illuminated instrument pixels inside central display"
+            "detail": "656 illuminated instrument pixels inside central display"
         },
         {
             "name": "02-cockpit.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,671"
+            "detail": "visible sample fraction 0,806"
         },
         {
             "name": "03-controls.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,706"
+            "detail": "visible sample fraction 0,860"
         },
         {
             "name": "04-space.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,792"
+            "detail": "visible sample fraction 0,883"
+        },
+        {
+            "name": "05-overhead.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,935"
+        },
+        {
+            "name": "06-headlights-off.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,874"
+        },
+        {
+            "name": "07-headlights-on.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,874"
+        },
+        {
+            "name": "Headlights illuminate geometry",
+            "passed": true,
+            "detail": "asteroid centre brightness: off 0,177; on 0,288"
         },
         {
             "name": "No runtime errors",
