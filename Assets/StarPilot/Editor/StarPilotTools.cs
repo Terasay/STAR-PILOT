@@ -43,7 +43,7 @@ namespace StarPilot.Editor
             var profile=ScriptableObject.CreateInstance<VolumeProfile>();profile.name="FlightGrade";
             AssetDatabase.CreateAsset(profile,path);
             var tone=profile.Add<Tonemapping>(true);tone.mode.Override(TonemappingMode.ACES);
-            var bloom=profile.Add<Bloom>(true);bloom.threshold.Override(1.3f);bloom.intensity.Override(.2f);bloom.scatter.Override(.65f);
+            var bloom=profile.Add<Bloom>(true);bloom.threshold.Override(1.15f);bloom.intensity.Override(.28f);bloom.scatter.Override(.65f);
             var vignette=profile.Add<Vignette>(true);vignette.intensity.Override(.18f);vignette.smoothness.Override(.5f);
             foreach(var component in profile.components)AssetDatabase.AddObjectToAsset(component,profile);
             EditorUtility.SetDirty(profile);AssetDatabase.SaveAssets();
@@ -57,7 +57,7 @@ namespace StarPilot.Editor
                 string assetPath=path.Replace('\\','/');
                 var importer=AssetImporter.GetAtPath(assetPath) as TextureImporter;if(importer==null)continue;
                 bool normal=assetPath.Contains("nor_gl"),srgb=!normal && !assetPath.Contains("rough");
-                int size=assetPath.Contains("BlueMarble")?4096:1024;
+                int size=assetPath.Contains("Marble")?4096:1024;
                 var type=normal?TextureImporterType.NormalMap:TextureImporterType.Default;
                 if(importer.textureType==type && importer.sRGBTexture==srgb && importer.maxTextureSize==size && importer.anisoLevel==8)continue;
                 importer.textureType=type;importer.sRGBTexture=srgb;importer.maxTextureSize=size;importer.anisoLevel=8;

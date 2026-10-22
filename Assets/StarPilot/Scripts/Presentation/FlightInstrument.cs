@@ -30,8 +30,8 @@ namespace StarPilot
                 v.AddVert(Vector2.zero,background,Vector2.zero);v.AddVert(Polar(216,i*3.75f),background,Vector2.zero);
                 v.AddVert(Polar(216,(i+1)*3.75f),background,Vector2.zero);v.AddTriangle(n,n+1,n+2);
             }
-            for(int r=38;r<=152;r+=38)Arc(v,Vector2.zero,r,0,360,1.3f,Dim);
-            Line(v,new Vector2(-155,0),new Vector2(155,0),1,Dim);Line(v,new Vector2(0,-155),new Vector2(0,155),1,Dim);
+            for(int r=38;r<=152;r+=38)Arc(v,Vector2.zero,r,0,360,2,Dim);
+            Line(v,new Vector2(-155,0),new Vector2(155,0),1.8f,Dim);Line(v,new Vector2(0,-155),new Vector2(0,155),1.8f,Dim);
             Arc(v,Vector2.zero,160,0,360,2,Cyan);
             for(int i=0;i<72;i++){float a=i*5;Line(v,Polar(163,a),Polar(i%6==0?173:167,a),i%6==0?2:1,i%6==0?Pale:Dim);}
             Arc(v,Vector2.zero,180,35,140,4,Cyan);Arc(v,Vector2.zero,180,215,320,4,Cyan);
@@ -98,7 +98,9 @@ namespace StarPilot
         {
             var f=new GameObject(kind+" / vector graphics",typeof(RectTransform),typeof(CanvasRenderer),typeof(FlightInstrument)).GetComponent<FlightInstrument>();
             f.transform.SetParent(parent,false);f.rectTransform.anchoredPosition=position;f.rectTransform.sizeDelta=new Vector2(600,400);
-            f.raycastTarget=false;f.Kind=kind;f.Ship=ship;return f;
+            f.raycastTarget=false;f.Kind=kind;f.Ship=ship;
+            // Keep vector instruments on Unity UI material so their batching matches the canvas.
+            return f;
         }
     }
 }

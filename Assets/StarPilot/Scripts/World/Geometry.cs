@@ -9,6 +9,8 @@ namespace StarPilot
     {
         readonly List<Object> owned;
         public Geometry(List<Object> ownedObjects) { owned = ownedObjects; }
+        public Material ShaderMaterial(string name,string resource)
+        {var material=new Material(Resources.Load<Shader>(resource)){name=name};owned.Add(material);return material;}
 
         public Material Material(string name, Color color, float metallic = 0.6f, float smoothness = 0.5f, float glow = 0f)
         {
@@ -53,6 +55,30 @@ namespace StarPilot
             var beam = Box(name, parent, (a + b) * 0.5f, new Vector3(width, width, Vector3.Distance(a,b)), material);
             beam.transform.localRotation = Quaternion.LookRotation(b-a);
             return beam;
+        }
+
+        public GameObject BeveledBeam(string name,Transform parent,Vector3 a,Vector3 b,float width,Material material)
+        {
+            var beam=Panel(name,parent,(a+b)*.5f,new Vector3(width,width,Vector3.Distance(a,b)),material,default,width*.2f);
+            beam.transform.localRotation=Quaternion.LookRotation(b-a);return beam;
+        }
+
+        public void DetailMaterial(Material material,string texture,float scale,float strength)
+        {
+            material.SetFloat("_Rock",2);material.SetFloat("_TextureScale",scale);material.SetFloat("_NormalStrength",strength);
+            material.SetTexture("_RockColor",Resources.Load<Texture2D>("StarPilot/Textures/"+texture+"_diffuse"));
+            material.SetTexture("_RockNormal",Resources.Load<Texture2D>("StarPilot/Textures/"+texture+"_nor_gl"));
+            material.SetTexture("_RockRoughness",Resources.Load<Texture2D>("StarPilot/Textures/"+texture+"_rough"));
+        }
+
+        public void Windshield(Transform parent,Material material)
+        {
+            var mesh=new Mesh{name="Trapezoid canopy glazing",vertices=new[]{new Vector3(-1.42f,.98f,1.66f),new Vector3(1.42f,.98f,1.66f),new Vector3(.87f,2.5f,1.35f),new Vector3(-.87f,2.5f,1.35f)},
+                triangles=new[]{0,2,1,0,3,2},uv=new[]{Vector2.zero,Vector2.right,Vector2.one,Vector2.up}};
+            mesh.RecalculateNormals();mesh.RecalculateBounds();owned.Add(mesh);
+            var glass=new GameObject("Forward canopy / pressure glazing",typeof(MeshFilter),typeof(MeshRenderer));glass.transform.SetParent(parent,false);
+            glass.GetComponent<MeshFilter>().sharedMesh=mesh;glass.GetComponent<MeshRenderer>().sharedMaterial=material;
+            glass.GetComponent<MeshRenderer>().shadowCastingMode=ShadowCastingMode.Off;
         }
 
         // Eight-sided face with a bevel around the front and rear edges. Dimensions are in metres.

@@ -14,24 +14,32 @@ namespace StarPilot
         {g=geometry;hull=h;trim=t;dark=d;cyan=c;amber=a;white=w;}
         public void Build(Transform ship,CockpitDisplays displays)
         {
-            face=g.Material("Anodised instrument face",new Color(.034f,.055f,.065f),.5f,.42f);
-            suit=g.Material("Pilot / pressure suit teal",new Color(.07f,.18f,.2f),.04f,.24f);
+            face=g.Material("Anodised instrument face",new Color(.065f,.083f,.09f),.4f,.5f);
+            suit=g.Material("Pilot / woven pressure suit",new Color(.31f,.36f,.35f),0,.23f);
+            g.DetailMaterial(face,"blue_metal_plate",1.5f,.3f);
+            g.DetailMaterial(suit,"leather_white",3.3f,.6f);
+            g.DetailMaterial(hull,"blue_metal_plate",.9f,.3f);
+            g.DetailMaterial(trim,"blue_metal_plate",2f,.16f);
+            CockpitDisplays.ScreenMaterial=g.ShaderMaterial("Phosphor / instrument glass","StarPilot/Instrument");
             var cockpit=new GameObject("SP-01 / pressure cockpit").transform;cockpit.SetParent(ship,false);
             Shell(cockpit);
+            g.Windshield(cockpit,g.ShaderMaterial("Coated pressure glazing","StarPilot/Canopy"));
+            var reflection=new GameObject("Cabin reflection capture",typeof(CockpitReflection)).transform;
+            reflection.SetParent(cockpit,false);reflection.localPosition=new Vector3(0,1.6f,.1f);
             var interaction=ship.gameObject.AddComponent<CockpitInteraction>();interaction.Ship=displays.Ship;
             var instruments=new System.Collections.Generic.List<FlightInstrument>();
             var left=Monitor(cockpit,"KINETICS",new Vector3(-.64f,1.04f,1.19f),new Vector2(580,400),new Vector3(16,-12,0));
             instruments.Add(FlightInstrument.Create(left.transform,FlightInstrument.Instrument.Velocity,new Vector2(0,0),displays.Ship));
             displays.SpeedText=Label(left.transform,"Speed","000.0",57,new Vector2(-105,8),new Vector2(195,80),TextAnchor.MiddleCenter);
-            Label(left.transform,"Unit","METRES / SECOND",13,new Vector2(-105,-50),new Vector2(185,25),TextAnchor.MiddleCenter);
-            Label(left.transform,"Thrust label","THR    VRT",13,new Vector2(145,135),new Vector2(120,25),TextAnchor.MiddleCenter);
-            displays.FlightMode=Label(left.transform,"Flight mode","FLIGHT ASSIST / ON",14,new Vector2(0,-166),new Vector2(510,25));
+            Label(left.transform,"Unit","METRES / SECOND",17,new Vector2(-105,-50),new Vector2(195,25),TextAnchor.MiddleCenter);
+            Label(left.transform,"Thrust label","THR    VRT",18,new Vector2(145,135),new Vector2(120,25),TextAnchor.MiddleCenter);
+            displays.FlightMode=Label(left.transform,"Flight mode","FLIGHT ASSIST / ON",19,new Vector2(0,-166),new Vector2(510,28));
 
             var right=Monitor(cockpit,"VEHICLE SYSTEMS",new Vector3(.64f,1.04f,1.19f),new Vector2(580,400),new Vector3(16,12,0));
             instruments.Add(FlightInstrument.Create(right.transform,FlightInstrument.Instrument.Systems,Vector2.zero,displays.Ship));
             displays.SystemsText=Label(right.transform,"Hull","HULL / 100%",17,new Vector2(-118,-120),new Vector2(205,30),TextAnchor.MiddleCenter);
-            for(int i=0;i<4;i++)Label(right.transform,"Channel "+i,new[]{"PROPULSION","FLIGHT ASSIST","HULL INTEGRITY","BRAKE RELEASE"}[i],12,new Vector2(118,105-i*48),new Vector2(180,20));
-            Label(right.transform,"Bus","MAIN BUS  /  28 V       SP-01",13,new Vector2(0,-166),new Vector2(510,25));
+            for(int i=0;i<4;i++)Label(right.transform,"Channel "+i,new[]{"PROPULSION","FLIGHT ASSIST","HULL INTEGRITY","BRAKE RELEASE"}[i],18,new Vector2(128,105-i*48),new Vector2(200,24));
+            Label(right.transform,"Bus","MAIN BUS  /  28 V       SP-01",18,new Vector2(0,-166),new Vector2(510,25));
 
             var navRoot=new GameObject("Central navigation housing").transform;navRoot.SetParent(cockpit,false);
             navRoot.localPosition=new Vector3(0,1.09f,1.1f);navRoot.localRotation=Quaternion.Euler(14,0,0);
@@ -43,8 +51,8 @@ namespace StarPilot
             for(int j=0;j<8;j++){float a=j*Mathf.PI/4;g.Sphere("Bezel screw",navRoot,new Vector3(Mathf.Sin(a)*.25f,Mathf.Cos(a)*.25f,-.02f),Vector3.one*.012f,dark);}
             var nav=CockpitDisplays.Screen(navRoot,"Navigation / PPI",new Vector3(0,0,-.034f),new Vector2(420,420),Vector3.zero);
             instruments.Add(FlightInstrument.Create(nav.transform,FlightInstrument.Instrument.Navigation,Vector2.zero,displays.Ship));
-            Label(nav.transform,"Nav label","N A V",15,new Vector2(0,211),new Vector2(110,25),TextAnchor.MiddleCenter);
-            displays.NavigationText=Label(nav.transform,"Range","GATE 01 · 0150 M",16,new Vector2(0,-211),new Vector2(400,25),TextAnchor.MiddleCenter);
+            Label(nav.transform,"Nav label","N A V",19,new Vector2(0,211),new Vector2(110,28),TextAnchor.MiddleCenter);
+            displays.NavigationText=Label(nav.transform,"Range","GATE 01 · 0150 M",19,new Vector2(0,-211),new Vector2(400,28),TextAnchor.MiddleCenter);
 
             for(int side=-1;side<=1;side+=2)
             {
@@ -70,7 +78,10 @@ namespace StarPilot
             var hands=ship.gameObject.AddComponent<PilotHands>();hands.Interaction=interaction;
             hands.LeftRest=Rest(displays.Throttle,new Vector3(0,.26f,-.045f),new Vector3(10,-8,0));
             hands.RightRest=Rest(displays.Stick,new Vector3(.018f,.24f,-.055f),new Vector3(24,-8,-14));
-            hands.Build(g,cockpit,suit,dark,trim,cyan);
+            var gloveRubber=g.Material("Glove / flexible joints",new Color(.023f,.03f,.032f),0,.16f);
+            var gloveArmour=g.Material("Glove / knuckle guards",new Color(.045f,.13f,.14f),.15f,.38f);
+            g.DetailMaterial(gloveRubber,"leather_white",4,.4f);g.DetailMaterial(gloveArmour,"blue_metal_plate",3,.18f);
+            hands.Build(g,cockpit,suit,gloveRubber,gloveArmour,cyan);
 
             var hud=CockpitDisplays.Screen(cockpit,"Combiner glass / flight symbology",new Vector3(0,1.57f,1.72f),new Vector2(850,220),Vector3.zero);
             for(int side=-1;side<=1;side+=2)
@@ -80,9 +91,9 @@ namespace StarPilot
                 for(int j=-2;j<=2;j++)CockpitDisplays.Rect(hud.transform,"Pitch ticks",new Vector2(side*210,j*28),new Vector2(j==0?30:16,1),new Color(.3f,.7f,.72f,.28f));
             }
             displays.CombinerText=Label(hud.transform,"HUD telemetry","",23,new Vector2(0,-68),new Vector2(720,70),TextAnchor.MiddleCenter);
-            g.Lamp("Port instrument bounce",cockpit,new Vector3(-.95f,1.42f,.35f),new Color(.16f,.67f,.85f),1.35f,2.2f);
-            g.Lamp("Starboard instrument bounce",cockpit,new Vector3(.9f,1.36f,.45f),new Color(.9f,.35f,.12f),.85f,2.1f);
-            g.Lamp("Overhead soft practical",cockpit,new Vector3(0,2.22f,.1f),new Color(.55f,.78f,.88f),2.4f,3.5f);
+            g.Lamp("Port instrument bounce",cockpit,new Vector3(-.95f,1.42f,.35f),new Color(.16f,.67f,.85f),.85f,2.2f);
+            g.Lamp("Starboard instrument bounce",cockpit,new Vector3(.9f,1.36f,.45f),new Color(.9f,.35f,.12f),.55f,2.1f);
+            g.Lamp("Overhead soft practical",cockpit,new Vector3(0,2.22f,.1f),new Color(.68f,.8f,.88f),1.7f,3.5f);
         }
         void Shell(Transform p)
         {
@@ -108,12 +119,21 @@ namespace StarPilot
                 var serviceLabel=CockpitDisplays.Screen(service,"Access stencil",new Vector3(0,.135f,-.014f),new Vector2(340,45),Vector3.zero);
                 Label(serviceLabel.transform,"Stencil",side<0?"LIFE SUPPORT / ACCESS 04":"RCS ACTUATORS / ACCESS 07",16,Vector2.zero,new Vector2(340,45),TextAnchor.MiddleCenter);
                 Vector3 foot=new Vector3(side*1.43f,.95f,1.67f),roof=new Vector3(side*.87f,2.51f,1.35f);
-                g.Beam("Canopy load frame",p,foot,roof,.115f,hull);
+                g.BeveledBeam("Canopy load frame",p,foot,roof,.10f,hull);
                 g.Beam("Inner canopy seal",p,foot+new Vector3(-side*.05f,.01f,-.06f),roof+new Vector3(-side*.05f,0,-.06f),.024f,dark);
                 g.Beam("Frame edge highlight",p,foot+new Vector3(side*.05f,0,-.04f),roof+new Vector3(side*.05f,0,-.04f),.014f,trim);
-                g.Beam("Canopy roof spar",p,roof,new Vector3(side*.99f,2.47f,-1.6f),.13f,hull);
-                g.Beam("Shoulder canopy brace",p,new Vector3(side*1.46f,.88f,-.32f),new Vector3(side*.99f,2.47f,-.55f),.13f,hull);
-                g.Beam("Window sill",p,new Vector3(side*1.43f,1.01f,1.67f),new Vector3(side*1.46f,1.01f,-1.5f),.11f,hull);
+                g.BeveledBeam("Canopy roof spar",p,roof,new Vector3(side*.99f,2.47f,-1.6f),.13f,hull);
+                g.BeveledBeam("Shoulder canopy brace",p,new Vector3(side*1.46f,.88f,-.32f),new Vector3(side*.99f,2.47f,-.55f),.13f,hull);
+                g.BeveledBeam("Window sill",p,new Vector3(side*1.43f,1.01f,1.67f),new Vector3(side*1.46f,1.01f,-1.5f),.11f,hull);
+                for(int bolt=1;bolt<7;bolt++)
+                {
+                    Vector3 location=Vector3.Lerp(foot,roof,bolt/7f)+new Vector3(0,0,-.052f);
+                    g.Sphere("Canopy structural bolt",p,location,new Vector3(.018f,.018f,.009f),trim);
+                    g.Box("Bolt slot",p,location-new Vector3(0,0,.006f),new Vector3(.009f,.002f,.001f),dark);
+                }
+                var frameLabel=CockpitDisplays.Screen(p,"Canopy safety stencil",Vector3.Lerp(foot,roof,.44f)+new Vector3(0,0,-.057f),new Vector2(250,100),new Vector3(12,0,-side*20));
+                frameLabel.transform.localScale=Vector3.one*.0006f;
+                Label(frameLabel.transform,"Pressure rating","CANOPY LOCK\nPRESSURISED",19,Vector2.zero,new Vector2(250,100),TextAnchor.MiddleCenter);
                 g.Box("Window sill light",p,new Vector3(side*1.39f,1.056f,.2f),new Vector3(.014f,.014f,2.35f),white);
                 for(int j=0;j<5;j++)
                 {
@@ -123,7 +143,7 @@ namespace StarPilot
                 g.Panel("Rudder pedal",p,new Vector3(side*.31f,.38f,.95f),new Vector3(.24f,.31f,.06f),trim,new Vector3(55,0,0));
                 for(int j=0;j<4;j++)g.Box("Pedal tread",p,new Vector3(side*.31f,.48f-j*.04f,.91f+j*.035f),new Vector3(.19f,.012f,.014f),dark);
             }
-            g.Beam("Upper windscreen arch",p,new Vector3(-.87f,2.51f,1.35f),new Vector3(.87f,2.51f,1.35f),.13f,hull);
+            g.BeveledBeam("Upper windscreen arch",p,new Vector3(-.87f,2.51f,1.35f),new Vector3(.87f,2.51f,1.35f),.13f,hull);
             var ceiling=new GameObject("Overhead service panel").transform;ceiling.SetParent(p,false);ceiling.localPosition=new Vector3(0,2.34f,.75f);ceiling.localRotation=Quaternion.Euler(-52,0,0);
             g.Panel("Overhead shell",ceiling,Vector3.zero,new Vector3(1.42f,.29f,.09f),hull,default,.07f);
             for(int i=0;i<10;i++)
@@ -151,10 +171,10 @@ namespace StarPilot
             var canvas=CockpitDisplays.Screen(mount,title+" / LCD",new Vector3(0,0,-.018f),size,Vector3.zero);
             CockpitDisplays.Rect(canvas.transform,"LCD black",Vector2.zero,size,new Color(.004f,.012f,.018f));
             // Subtle fixed grid. Static marks do not masquerade as telemetry.
-            for(float x=-size.x*.5f+20;x<size.x*.5f;x+=25)CockpitDisplays.Rect(canvas.transform,"Grid column",new Vector2(x,0),new Vector2(.6f,size.y-40),new Color(.08f,.25f,.28f,.15f));
-            for(float y=-size.y*.5f+20;y<size.y*.5f;y+=25)CockpitDisplays.Rect(canvas.transform,"Grid row",new Vector2(0,y),new Vector2(size.x-30,.6f),new Color(.08f,.25f,.28f,.15f));
-            Label(canvas.transform,"Instrument name",title,15,new Vector2(0,size.y*.5f-22),new Vector2(size.x-34,24));
-            CockpitDisplays.Rect(canvas.transform,"Header rule",new Vector2(0,size.y*.5f-41),new Vector2(size.x-34,1),new Color(.12f,.4f,.43f));
+            for(float x=-size.x*.5f+30;x<size.x*.5f;x+=50)CockpitDisplays.Rect(canvas.transform,"Grid column",new Vector2(x,0),new Vector2(1.3f,size.y-84),new Color(.05f,.18f,.2f,.09f));
+            for(float y=-size.y*.5f+42;y<size.y*.5f-42;y+=50)CockpitDisplays.Rect(canvas.transform,"Grid row",new Vector2(0,y),new Vector2(size.x-30,1.3f),new Color(.05f,.18f,.2f,.09f));
+            Label(canvas.transform,"Instrument name",title,22,new Vector2(0,size.y*.5f-22),new Vector2(size.x-34,28));
+            CockpitDisplays.Rect(canvas.transform,"Header rule",new Vector2(0,size.y*.5f-41),new Vector2(size.x-34,1.5f),new Color(.12f,.4f,.43f));
             return canvas;
         }
         void Controls(Transform p,CockpitDisplays d,CockpitInteraction interaction)

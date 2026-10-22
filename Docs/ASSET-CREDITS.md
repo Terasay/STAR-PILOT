@@ -12,12 +12,24 @@
 
 NASA не является партнёром проекта и не одобряла игру. Логотипы NASA не используются.
 
+Ночные огни `BlackMarble.jpg`: NASA Earth Observatory, Black Marble, 2016 Color, 3600 × 1800. Синий фон карты отсекается шейдером; огни видны на ночной стороне, затеняются облаками.
+
+- Источник: https://science.nasa.gov/earth/earth-observatory/earth-at-night/maps/
+- Файл: https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/144000/144898/BlackMarble_2016_01deg.jpg
+
 ## Камень
 
 **Rock Boulder Dry**, Poly Haven. Авторы: Dimitrios Savva (фотография), Rico Cilliers (обработка). Лицензия **CC0**. Карты diffuse, normal GL и roughness, 1024 × 1024. Накладываются на собственную геометрию астероидов.
 
 - Источник: https://polyhaven.com/a/rock_boulder_dry
 - Лицензия: https://polyhaven.com/license
+
+## Кабина и обшивка
+
+Дополнительные материалы кабины и перчаток: **Blue Metal Plate** и **Leather White**, Rob Tuytel / Poly Haven, CC0. Карты diffuse, normal GL и roughness в 1024 × 1024; цвет меняется материалами игры.
+
+- https://polyhaven.com/a/blue_metal_plate
+- https://polyhaven.com/a/leather_white
 
 ## Шрифт приборов
 

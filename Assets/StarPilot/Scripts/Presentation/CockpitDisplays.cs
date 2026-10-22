@@ -5,6 +5,7 @@ namespace StarPilot
 {
     public sealed class CockpitDisplays : MonoBehaviour
     {
+        public static Material ScreenMaterial;
         public ShipFlightController Ship;
         public FlightRoute Route;
         public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, CombinerText;
@@ -55,6 +56,8 @@ namespace StarPilot
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
             label.raycastTarget = false;
+            var canvas=parent.GetComponentInParent<Canvas>();
+            if(ScreenMaterial && canvas && canvas.renderMode==RenderMode.WorldSpace)label.material=ScreenMaterial;
             return label;
         }
 
@@ -63,7 +66,10 @@ namespace StarPilot
             var image = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             image.transform.SetParent(parent, false);
             image.rectTransform.anchoredPosition = position; image.rectTransform.sizeDelta = size;
-            image.color = color; image.raycastTarget = false; return image;
+            image.color = color; image.raycastTarget = false;
+            var canvas=parent.GetComponentInParent<Canvas>();
+            if(ScreenMaterial && canvas && canvas.renderMode==RenderMode.WorldSpace)image.material=ScreenMaterial;
+            return image;
         }
     }
 }

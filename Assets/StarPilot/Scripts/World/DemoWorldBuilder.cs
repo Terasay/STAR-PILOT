@@ -66,7 +66,7 @@ namespace StarPilot
             RenderSettings.ambientLight=new Color(.065f,.09f,.14f);
             RenderSettings.fog=false;
             var sun=new GameObject("Kepler / primary star",typeof(Light)).GetComponent<Light>();sun.transform.SetParent(root,false);
-            Vector3 sunDirection=new Vector3(.8f,.45f,-.38f).normalized;
+            Vector3 sunDirection=new Vector3(.65f,.35f,.7f).normalized;
             sun.transform.rotation=Quaternion.LookRotation(-sunDirection);sun.type=LightType.Directional;
             sun.color=new Color(1f,.86f,.69f);sun.intensity=2.6f;sun.shadows=LightShadows.Soft;
             RenderSettings.skybox.SetVector("_SunDirection",sunDirection);
@@ -77,7 +77,7 @@ namespace StarPilot
             {
                 profile=ScriptableObject.CreateInstance<VolumeProfile>();owned.Add(profile);
                 var tone=profile.Add<Tonemapping>(true);tone.mode.Override(TonemappingMode.ACES);
-                var bloom=profile.Add<Bloom>(true);bloom.threshold.Override(1.3f);bloom.intensity.Override(.2f);bloom.scatter.Override(.65f);
+                var bloom=profile.Add<Bloom>(true);bloom.threshold.Override(1.15f);bloom.intensity.Override(.28f);bloom.scatter.Override(.65f);
                 var vignette=profile.Add<Vignette>(true);vignette.intensity.Override(.18f);vignette.smoothness.Override(.5f);
             }
             volume.sharedProfile=profile;
@@ -88,6 +88,7 @@ namespace StarPilot
             var space=new GameObject("Kepler / orbital environment").transform;space.SetParent(root,false);
             var planetMaterial=new Material(Resources.Load<Shader>("StarPilot/Planet")){name="Kepler planet"};owned.Add(planetMaterial);
             planetMaterial.SetTexture("_Surface",Resources.Load<Texture2D>("StarPilot/Textures/BlueMarble"));
+            planetMaterial.SetTexture("_Night",Resources.Load<Texture2D>("StarPilot/Textures/BlackMarble"));
             Vector3 planetPosition=new Vector3(-5900,-2900,9800);
             var planet=g.Sphere("KEPLER / ocean world",space,planetPosition,Vector3.one*10500,planetMaterial);
             planet.transform.rotation=Quaternion.Euler(18,15,-24);
@@ -95,7 +96,7 @@ namespace StarPilot
             var atmosphereMaterial=new Material(Resources.Load<Shader>("StarPilot/Atmosphere")){name="Blue atmospheric scattering"};owned.Add(atmosphereMaterial);
             var atmosphere=g.Sphere("Atmospheric limb",space,planetPosition,Vector3.one*10600,atmosphereMaterial);
             atmosphere.GetComponent<MeshFilter>().sharedMesh=planet.GetComponent<MeshFilter>().sharedMesh;
-            BuildStation(space,new Vector3(20,-35,1080));
+            BuildStation(space,new Vector3(170,16,1060));
             var random=new System.Random(1729);
             for (int i=0;i<94;i++)
             {
@@ -138,8 +139,20 @@ namespace StarPilot
         void BuildStation(Transform root,Vector3 position)
         {
             var station=new GameObject("KEPLER / orbital research station").transform;station.SetParent(root,false);station.localPosition=position;
+            station.localRotation=Quaternion.Euler(0,-18,-12);
             g.Torus("Habitat ring",station,Vector3.zero,65,4,hull,96);
             g.Torus("Habitat light ribbon",station,new Vector3(0,0,-4),65,.4f,cyan,96);
+            g.Torus("Aft pressure ring",station,new Vector3(0,0,16),65,2.5f,hull,96);
+            g.Torus("Docking collar",station,new Vector3(0,0,-43),10,1.8f,trim,64);
+            g.Torus("Docking approach lights",station,new Vector3(0,0,-45),10,.35f,white,64);
+            g.Panel("Docking bay face",station,new Vector3(0,0,-40),new Vector3(18,18,2),dark,default,4);
+            for(int module=0;module<24;module++)
+            {
+                float angle=module*Mathf.PI*2/24;Vector3 point=new Vector3(Mathf.Sin(angle)*65,Mathf.Cos(angle)*65,0);
+                var block=g.Panel("Habitat pressure compartment",station,point,new Vector3(13,7,14),hull,new Vector3(0,0,-module*15),1.5f);
+                for(int window=0;window<4;window++)g.Box("Habitat observation window",block.transform,new Vector3(-4.5f+window*3,0,-7.1f),new Vector3(1.5f,.8f,.08f),module%3==0?amber:white);
+                g.Beam("Ring axial truss",station,point,point+Vector3.forward*16,.65f,trim);
+            }
             g.Box("Central command module",station,Vector3.zero,new Vector3(18,18,75),hull,default,true);
             for(int i=0;i<6;i++)
             {

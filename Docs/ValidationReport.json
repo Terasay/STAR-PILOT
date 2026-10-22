@@ -6,7 +6,7 @@
         {
             "name": "01-menu.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,559"
+            "detail": "visible sample fraction 0,588"
         },
         {
             "name": "Scene initialized",
@@ -59,6 +59,11 @@
             "detail": "W command 1; speed 2,40"
         },
         {
+            "name": "Physical throttle follows keyboard",
+            "passed": true,
+            "detail": "W moves the visible throttle and resting glove"
+        },
+        {
             "name": "Keyboard brake input",
             "passed": true,
             "detail": "Space command reaches flight controller"
@@ -69,9 +74,49 @@
             "detail": "T toggles stabilization"
         },
         {
+            "name": "Mouse cockpit switch",
+            "passed": true,
+            "detail": "Tab + mouse ray reaches ENGINE switch and shuts down propulsion"
+        },
+        {
+            "name": "Physical momentary brake",
+            "passed": true,
+            "detail": "Cockpit BRAKE holds the shared flight command"
+        },
+        {
+            "name": "Physical brake release",
+            "passed": true,
+            "detail": "Releasing BRAKE clears the command without latching"
+        },
+        {
+            "name": "Desktop without XR tracking",
+            "passed": true,
+            "detail": "No headset required; tracked hands are not fabricated"
+        },
+        {
+            "name": "Pilot hands at controls",
+            "passed": true,
+            "detail": "Both visible glove rigs follow the control grip poses"
+        },
+        {
+            "name": "Navigation screen unobstructed",
+            "passed": true,
+            "detail": "857 illuminated instrument pixels inside central display"
+        },
+        {
             "name": "02-cockpit.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,656"
+            "detail": "visible sample fraction 0,671"
+        },
+        {
+            "name": "03-controls.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,706"
+        },
+        {
+            "name": "04-space.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,792"
         },
         {
             "name": "No runtime errors",
