@@ -23,6 +23,7 @@ namespace StarPilot
             builder.Build(transform,out var ship,out var camera,out var route,out var displays);
             Ship=ship;PilotCamera=camera;Route=route;
             Input=Ship.gameObject.AddComponent<PilotInput>();Input.Ship=Ship;Input.View=PilotCamera.transform;
+            Input.Lighting=Ship.GetComponent<ShipLighting>();
             Cockpit=Ship.GetComponent<CockpitInteraction>();Cockpit.Input=Input;
             Audio=Ship.gameObject.AddComponent<ShipAudio>();Audio.Ship=Ship;
             Xr=gameObject.AddComponent<XrFlightMode>();Xr.Demo=this;

@@ -108,6 +108,17 @@ namespace StarPilot
             CheckResult("Desktop without XR tracking",!Demo.Cockpit.TryHandPose(-1,out _,out _,out _),"No headset required; tracked hands are not fabricated");
             var hands=ship.GetComponent<PilotHands>();
             CheckResult("Pilot hands at controls",Vector3.Distance(hands.Right.position,hands.RightRest.position)<.01f && Vector3.Distance(hands.Left.position,hands.LeftRest.position)<.01f,"Both visible glove rigs follow the control grip poses");
+            var lighting=ship.GetComponent<ShipLighting>();
+            InputSystem.QueueStateEvent(testKeyboard,new KeyboardState(Key.L));yield return null;yield return null;
+            CheckResult("Keyboard headlights",!lighting.HeadlightsOn && !lighting.Headlights[0].enabled,"L switches both exterior floodlights off");
+            InputSystem.QueueStateEvent(testKeyboard,new KeyboardState(Key.C));yield return null;yield return null;
+            float dimIntensity=lighting.CabinLights[0].intensity;
+            CheckResult("Keyboard cabin lighting",!lighting.CabinBright,"C selects dim cabin mode");
+            InputSystem.QueueStateEvent(testKeyboard,new KeyboardState());yield return null;yield return null;
+            var cabinSwitch=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.CabinLight);
+            cabinSwitch.Press();
+            CheckResult("Overhead lighting switch",lighting.CabinBright && lighting.CabinLights[0].intensity>dimIntensity*3,"Physical overhead rocker restores bright work lights");
+            var floodSwitch=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Headlights);floodSwitch.Press();
             InputSystem.RemoveDevice(testKeyboard);Demo.Input.enabled=false;
             Demo.ResetFlight();ship.ToggleEngine();
             yield return Steps(5);
@@ -117,6 +128,14 @@ namespace StarPilot
             CaptureFrame("03-controls.png");
             Demo.PilotCamera.transform.localRotation=Quaternion.Euler(-8,22,0);
             CaptureFrame("04-space.png");
+            Demo.PilotCamera.transform.localRotation=Quaternion.Euler(-23,0,0);
+            CaptureFrame("05-overhead.png");
+            ship.Translation=Vector3.zero;ship.Body.linearVelocity=Vector3.zero;
+            var asteroid=GameObject.Find("Asteroid 0").transform;
+            Demo.PilotCamera.transform.rotation=Quaternion.LookRotation(asteroid.position-Demo.PilotCamera.transform.position,ship.transform.up);
+            lighting.ToggleHeadlights();float unlit=CaptureFrame("06-headlights-off.png");
+            lighting.ToggleHeadlights();float lit=CaptureFrame("07-headlights-on.png");
+            CheckResult("Headlights illuminate geometry",lit>unlit+.025f,$"asteroid centre brightness: off {unlit:F3}; on {lit:F3}");
             Demo.PilotCamera.transform.localRotation=Quaternion.identity;
             yield return new WaitForSecondsRealtime(.5f);
             CheckResult("No runtime errors",report.errors.Count==0,$"errors {report.errors.Count}");
@@ -125,10 +144,11 @@ namespace StarPilot
             Application.Quit(passed?0:1);
         }
         static IEnumerator Steps(int count) { for(int i=0;i<count;i++)yield return new WaitForFixedUpdate(); }
-        void CaptureFrame(string name)
+        float CaptureFrame(string name)
         {
             // Minimized players may skip the swapchain. An explicit render request still renders the scene.
             var target=new RenderTexture(1920,1080,24,RenderTextureFormat.ARGB32);
+            target.antiAliasing=((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).msaaSampleCount;
             target.Create();
             Canvas canvas=Demo.Hud.DesktopCanvas;
             RenderMode oldMode=canvas.renderMode;Camera oldCamera=canvas.worldCamera;float oldDistance=canvas.planeDistance;
@@ -139,6 +159,9 @@ namespace StarPilot
             var image=new Texture2D(target.width,target.height,TextureFormat.RGB24,false);
             image.ReadPixels(new Rect(0,0,target.width,target.height),0,0);image.Apply();
             Color32[] pixels=image.GetPixels32();int visible=0,samples=0;
+            float centreLuma=0;
+            for(int y=target.height/2-20;y<target.height/2+20;y++)for(int x=target.width/2-20;x<target.width/2+20;x++)
+            {var pixel=pixels[y*target.width+x];centreLuma+=(pixel.r*.2126f+pixel.g*.7152f+pixel.b*.0722f)/(255*1600);}
             if(name=="02-cockpit.png")
             {
                 FlightInstrument navigation=null;
@@ -164,6 +187,7 @@ namespace StarPilot
             RenderTexture.active=previous;
             canvas.renderMode=oldMode;canvas.worldCamera=oldCamera;canvas.planeDistance=oldDistance;
             Canvas.ForceUpdateCanvases();target.Release();Destroy(target);Destroy(image);
+            return centreLuma;
         }
         void OnDestroy() { Application.logMessageReceived-=OnLog; }
     }

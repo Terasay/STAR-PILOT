@@ -74,7 +74,10 @@ namespace StarPilot
                 var c=hit.collider.GetComponent<CockpitControl>();
                 if(c && hit.distance<nearest){nearest=hit.distance;hovered=c;}
             }
-            if(hovered)Hint=hovered.Action==CockpitAction.Engine?"ЛКМ · ДВИГАТЕЛЬ":hovered.Action==CockpitAction.Assist?"ЛКМ · СТАБИЛИЗАЦИЯ":hovered.Action==CockpitAction.Brake?"УДЕРЖИВАЙ ЛКМ · ТОРМОЗ":"УДЕРЖИВАЙ ЛКМ · УСКОРЕНИЕ";
+            if(hovered)Hint=hovered.Action switch {
+                CockpitAction.Engine=>"ЛКМ · ДВИГАТЕЛЬ", CockpitAction.Assist=>"ЛКМ · СТАБИЛИЗАЦИЯ",
+                CockpitAction.Brake=>"УДЕРЖИВАЙ ЛКМ · ТОРМОЗ", CockpitAction.Boost=>"УДЕРЖИВАЙ ЛКМ · УСКОРЕНИЕ",
+                CockpitAction.Headlights=>"ЛКМ · ВНЕШНИЕ ФАРЫ", _=>"ЛКМ · СВЕТ КАБИНЫ" };
             else Hint="TAB · ПАНЕЛЬ УПРАВЛЕНИЯ";
             if(Mouse.current.leftButton.wasPressedThisFrame && hovered){mouseControl=hovered;hovered.Press();}
             if(!Mouse.current.leftButton.isPressed && mouseControl){mouseControl.Release();mouseControl=null;}

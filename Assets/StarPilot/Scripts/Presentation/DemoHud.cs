@@ -41,7 +41,7 @@ namespace StarPilot
             CockpitDisplays.Rect(flightInfo.transform,"ID rule",new Vector2(-754,473),new Vector2(270,1),new Color(.2f,.6f,.66f,.45f));
             status=Label(flightInfo.transform,"Status","",15,Cyan,new Vector2(-655,-492),new Vector2(480,30),TextAnchor.MiddleLeft);
             telemetry=Label(flightInfo.transform,"Interaction hint","",16,Cyan,new Vector2(0,-444),new Vector2(740,40),TextAnchor.MiddleCenter);
-            Label(flightInfo.transform,"Hint","TAB  панель    ·    ALT  обзор    ·    H  помощь    ·    ESC  меню",14,Ink,new Vector2(560,-492),new Vector2(650,30),TextAnchor.MiddleRight);
+            Label(flightInfo.transform,"Hint","L  фары  ·  C  свет  ·  TAB  панель  ·  ALT  обзор  ·  H  помощь",14,Ink,new Vector2(530,-492),new Vector2(720,30),TextAnchor.MiddleRight);
             objective=Label(flightInfo.transform,"Objective","",16,Ink,new Vector2(-675,403),new Vector2(430,65));
             var marker=Panel(flightInfo.transform,"Target",Vector2.zero,new Vector2(34,34),new Color(0,0,0,0));targetMarker=marker.GetComponent<RectTransform>();
             Label(marker.transform,"Diamond","◇",39,Cyan,Vector2.zero,new Vector2(46,46),TextAnchor.MiddleCenter);
@@ -50,7 +50,7 @@ namespace StarPilot
 
             menu=Panel(canvas.transform,"Flight menu",new Vector2(500,-15),new Vector2(660,705),new Color(.009f,.021f,.031f,.96f));
             CockpitDisplays.Rect(menu.transform,"Accent",new Vector2(-327,0),new Vector2(3,705),Cyan);
-            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 2",15,Cyan,new Vector2(0,300),new Vector2(555,35));
+            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 3",15,Cyan,new Vector2(0,300),new Vector2(555,35));
             menuTitle=Label(menu.transform,"Title","Орбита Кеплера",43,Color.white,new Vector2(0,240),new Vector2(555,70));
             Label(menu.transform,"Intro","SP–01 готов к вылету.\nПройди четыре навигационных маяка\nи почувствуй корабль в свободном полёте.",21,Ink,new Vector2(0,140),new Vector2(555,110));
             Label(menu.transform,"Controls summary","W / S   тяга     ·     Мышь   поворот\nA / D   вбок      ·     R / F   вверх / вниз\nПробел   тормоз   ·   Shift   ускорение",19,Ink,new Vector2(0,20),new Vector2(555,100));
@@ -72,7 +72,7 @@ namespace StarPilot
 
             help=Panel(canvas.transform,"Controls",new Vector2(-450,0),new Vector2(760,715),new Color(.009f,.021f,.031f,.96f));
             Label(help.transform,"Title","УПРАВЛЕНИЕ",26,Cyan,new Vector2(0,300),new Vector2(650,50));
-            Label(help.transform,"Bindings","W / S                 Тяга вперёд / назад\nA / D                 Боковые двигатели\nR / F                  Вверх / вниз\nМышь / стрелки    Тангаж и рыскание\nQ / E                 Крен\nЛевый Alt + мышь  Осмотреть кабину\nTab + ЛКМ           Кнопки на панели\nПробел               Активное торможение\nЛевый Shift          Ускорение\nT                       Стабилизация вкл. / выкл.\nI                        Двигатель вкл. / выкл.\nBackspace            Вернуться к старту\nH / Escape           Помощь / меню",19,Ink,new Vector2(0,35),new Vector2(650,500));
+            Label(help.transform,"Bindings","W / S                 Тяга вперёд / назад\nA / D                 Боковые двигатели\nR / F                  Вверх / вниз\nМышь / стрелки    Тангаж и рыскание\nQ / E                 Крен\nЛевый Alt + мышь  Осмотреть кабину\nTab + ЛКМ           Кнопки на панели\nПробел               Активное торможение\nЛевый Shift          Ускорение\nT                       Стабилизация вкл. / выкл.\nI                        Двигатель вкл. / выкл.\nL / C                  Фары / яркость кабины\nBackspace            Вернуться к старту\nH / Escape           Помощь / меню",19,Ink,new Vector2(0,35),new Vector2(650,500));
             Label(help.transform,"Physics note","Стабилизация плавно гасит движение.\nОтключи её клавишей T, чтобы лететь по инерции.\nТормоз и двигатели работают при включённом питании.",18,Cyan,new Vector2(0,-265),new Vector2(650,100));
             help.SetActive(false);
             Input.MenuRequested=()=>SetMenu(!Input.InMenu);

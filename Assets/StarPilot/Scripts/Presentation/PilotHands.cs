@@ -10,18 +10,25 @@ namespace StarPilot
         public Transform[] LeftFingers, RightFingers;
         public void Build(Geometry g,Transform cockpit,Material suit,Material rubber,Material metal,Material light)
         {
-            Left=Glove(g,cockpit,-1,suit,rubber,metal,light,out LeftFingers);
-            Right=Glove(g,cockpit,1,suit,rubber,metal,light,out RightFingers);
+            var leather=g.Material("Gloves / textured ivory leather",new Color(.52f,.56f,.52f),0,.37f);
+            g.DetailMaterial(leather,"leather_white",6.5f,.9f);
+            Left=Glove(g,cockpit,-1,leather,rubber,metal,light,out LeftFingers);
+            Right=Glove(g,cockpit,1,leather,rubber,metal,light,out RightFingers);
             LeftArm=Arm(g,cockpit,suit,rubber,metal,light);RightArm=Arm(g,cockpit,suit,rubber,metal,light);
         }
         static Transform Glove(Geometry g,Transform parent,int side,Material suit,Material rubber,Material metal,Material light,out Transform[] fingers)
         {
             var hand=new GameObject(side<0?"Left pilot glove":"Right pilot glove").transform;hand.SetParent(parent,false);
-            g.Sphere("Pressure glove / palm",hand,Vector3.zero,new Vector3(.115f,.07f,.155f),suit);
-            g.Sphere("Padded glove back",hand,new Vector3(0,.025f,-.006f),new Vector3(.112f,.044f,.123f),suit);
+            var palm=g.Sphere("Pressure glove / palm",hand,Vector3.zero,new Vector3(.115f,.07f,.155f),suit);g.RefineSphere(palm,48,32);
+            var back=g.Sphere("Padded glove back",hand,new Vector3(0,.025f,-.006f),new Vector3(.112f,.044f,.123f),suit);g.RefineSphere(back,48,32);
             g.Panel("Glove reinforcement",hand,new Vector3(0,.045f,-.016f),new Vector3(.071f,.012f,.07f),metal,new Vector3(8,0,0),.018f);
             g.Sphere("Wrist seal",hand,new Vector3(0,0,-.105f),new Vector3(.115f,.074f,.07f),rubber);
             var cuff=g.Torus("Pressure cuff coupling",hand,new Vector3(0,0,-.11f),.056f,.008f,metal,48);cuff.transform.localScale=new Vector3(1,.7f,1);
+            for(int j=0;j<8;j++)
+            {
+                float a=j*Mathf.PI/4;
+                g.Panel("Coupling lock",hand,new Vector3(Mathf.Cos(a)*.058f,Mathf.Sin(a)*.042f,-.11f),new Vector3(.013f,.011f,.021f),rubber,new Vector3(0,0,j*45),.003f);
+            }
             g.Panel("Wrist instrument",hand,new Vector3(0,.04f,-.105f),new Vector3(.09f,.025f,.06f),metal,default,.018f);
             g.Box("Wrist life support",hand,new Vector3(0,.05f,-.105f),new Vector3(.07f,.008f,.03f),rubber);
             for(int j=0;j<3;j++)g.Box("Wrist indicator",hand,new Vector3(-.022f+j*.022f,.055f,-.105f),new Vector3(.012f,.004f,.019f),light);
@@ -38,9 +45,10 @@ namespace StarPilot
                 float length=j==0?.044f:j==3?.039f:.05f;
                 g.Sphere("Knuckle",joint,Vector3.zero,new Vector3(.029f,.034f,.034f),suit);
                 g.Sphere("Padded knuckle guard",joint,new Vector3(0,.016f,.003f),new Vector3(.026f,.012f,.027f),metal);
-                g.Sphere("Proximal finger",joint,new Vector3(0,0,length*.5f),new Vector3(.026f,.032f,length+.016f),suit);
+                var finger=g.Sphere("Proximal finger",joint,new Vector3(0,0,length*.5f),new Vector3(.026f,.032f,length+.016f),suit);g.RefineSphere(finger,32,20);
                 var tip=new GameObject("Curled finger tip").transform;tip.SetParent(joint,false);tip.localPosition=new Vector3(0,0,length);tip.localRotation=Quaternion.Euler(65,0,0);
                 g.Sphere("Glove fingertip",tip,new Vector3(0,0,.02f),new Vector3(.026f,.031f,.052f),rubber);
+                for(int crease=0;crease<3;crease++)g.Box("Finger flexion crease",joint,new Vector3(0,.016f,length*.5f+crease*.006f),new Vector3(.022f,.002f,.002f),rubber);
                 g.Box("Knuckle seam",joint,new Vector3(0,.018f,.012f),new Vector3(.02f,.003f,.008f),metal);
             }
             var thumb=new GameObject("Thumb / flexion").transform;thumb.SetParent(hand,false);thumb.localPosition=new Vector3(-side*.061f,-.008f,0);
@@ -51,13 +59,18 @@ namespace StarPilot
         static Transform Arm(Geometry g,Transform parent,Material suit,Material rubber,Material metal,Material light)
         {
             var arm=new GameObject("Pressure suit / forearm").transform;arm.SetParent(parent,false);
-            g.Sphere("Sleeve",arm,Vector3.zero,new Vector3(.15f,.14f,1),suit);
-            g.Sphere("Padded pressure sleeve",arm,new Vector3(0,.017f,0),new Vector3(.145f,.125f,.88f),suit);
-            g.Panel("Forearm armour",arm,new Vector3(0,.07f,.10f),new Vector3(.095f,.014f,.34f),metal,default,.024f);
-            for(int side=-1;side<=1;side+=2)g.Beam("Sleeve seam",arm,new Vector3(side*.055f,.045f,-.32f),new Vector3(side*.055f,.045f,.32f),.003f,rubber);
-            g.Box("Forearm service patch",arm,new Vector3(0,.079f,-.04f),new Vector3(.055f,.003f,.08f),rubber);
-            for(int i=0;i<3;i++)g.Box("Service patch marks",arm,new Vector3(-.018f+i*.018f,.082f,-.04f),new Vector3(.008f,.002f,.05f),light);
-            for(int i=0;i<5;i++)g.Box("Flexion seam",arm,new Vector3(0,.066f,-.28f+i*.09f),new Vector3(.11f,.007f,.014f),rubber);
+            g.PressureSleeve(arm,suit);
+            g.Panel("Forearm armour",arm,new Vector3(0,.073f,.05f),new Vector3(.072f,.012f,.22f),metal,default,.02f);
+            for(int side=-1;side<=1;side+=2)g.Beam("Sleeve piping",arm,new Vector3(side*.058f,.05f,-.33f),new Vector3(side*.038f,.041f,.36f),.0025f,rubber);
+            for(int band=0;band<2;band++)
+            {
+                var ring=g.Torus("Wrist flex seam",arm,new Vector3(0,0,.36f+band*.045f),.059f-band*.002f,.0035f,rubber,48);
+                ring.transform.localScale=new Vector3(1,.91f,1);
+            }
+            var patch=CockpitDisplays.Screen(arm,"Suit identification",new Vector3(0,.081f,.05f),new Vector2(180,170),new Vector3(90,0,0));
+            patch.transform.localScale=Vector3.one*.00032f;
+            var label=CockpitDisplays.Text(patch.transform,"Crew badge","SP-01\nCREW",42,new Color(.78f,.84f,.79f),Vector2.zero,new Vector2(180,170),UnityEngine.TextAnchor.MiddleCenter);
+            label.font=Resources.Load<Font>("StarPilot/Fonts/Rajdhani-Medium");
             return arm;
         }
         void LateUpdate()

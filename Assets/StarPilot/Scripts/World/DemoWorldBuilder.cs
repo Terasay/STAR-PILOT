@@ -18,7 +18,7 @@ namespace StarPilot
         public void Build(Transform root, out ShipFlightController ship, out Camera camera,
             out FlightRoute route, out CockpitDisplays displays)
         {
-            hull = g.Material("Titanium / graphite", new Color(0.085f,0.105f,0.125f), 0.72f, 0.57f);
+            hull = g.Material("Titanium / graphite", new Color(.18f,.22f,.26f), .5f, .48f);
             trim = g.Material("Machined aluminium", new Color(0.25f,0.3f,0.34f), 0.8f, 0.7f);
             dark = g.Material("Ceramic / charcoal", new Color(0.012f,0.019f,0.027f), 0.15f, 0.4f);
             cyan = g.Material("Cyan instrument light", Cyan, 0.2f, 0.6f, 3f);
@@ -46,7 +46,8 @@ namespace StarPilot
             camera.allowHDR = true;
             var cameraData = camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;
-            cameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+            camera.allowMSAA=true;
+            cameraData.antialiasing = AntialiasingMode.None;
             cameraData.antialiasingQuality=AntialiasingQuality.High;
 
             displays = shipObject.AddComponent<CockpitDisplays>();
@@ -63,7 +64,7 @@ namespace StarPilot
         {
             RenderSettings.skybox=new Material(Resources.Load<Shader>("StarPilot/DeepSpace"));owned.Add(RenderSettings.skybox);
             RenderSettings.ambientMode=AmbientMode.Flat;
-            RenderSettings.ambientLight=new Color(.065f,.09f,.14f);
+            RenderSettings.ambientLight=new Color(.16f,.20f,.27f);
             RenderSettings.fog=false;
             var sun=new GameObject("Kepler / primary star",typeof(Light)).GetComponent<Light>();sun.transform.SetParent(root,false);
             Vector3 sunDirection=new Vector3(.65f,.35f,.7f).normalized;
@@ -71,6 +72,11 @@ namespace StarPilot
             sun.color=new Color(1f,.86f,.69f);sun.intensity=2.6f;sun.shadows=LightShadows.Soft;
             RenderSettings.skybox.SetVector("_SunDirection",sunDirection);
             RenderSettings.sun=sun;
+            // Broad cool fill approximates light returned by the nearby planet.
+            var bounce=new GameObject("Kepler / planetary bounce",typeof(Light)).GetComponent<Light>();
+            bounce.transform.SetParent(root,false);bounce.type=LightType.Directional;
+            bounce.transform.rotation=Quaternion.LookRotation(new Vector3(.5f,.25f,1));
+            bounce.color=new Color(.48f,.69f,1f);bounce.intensity=.65f;bounce.shadows=LightShadows.None;
             var volume=new GameObject("Restrained cinematic grade",typeof(Volume)).GetComponent<Volume>();volume.transform.SetParent(root,false);volume.isGlobal=true;
             var profile=Resources.Load<VolumeProfile>("StarPilot/FlightGrade");
             if(!profile)

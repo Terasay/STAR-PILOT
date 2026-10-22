@@ -8,7 +8,8 @@ namespace StarPilot
         public static Material ScreenMaterial;
         public ShipFlightController Ship;
         public FlightRoute Route;
-        public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, CombinerText;
+        public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, CombinerText, OverheadText;
+        public ShipLighting Lighting;
         public RectTransform[] AxisIndicators=new RectTransform[3];
         public FlightInstrument[] Instruments;
         public Transform Stick, Throttle;
@@ -20,6 +21,7 @@ namespace StarPilot
             if (Throttle) Throttle.localRotation = Quaternion.Slerp(Throttle.localRotation,Quaternion.Euler(Ship.Translation.z * 28f, 0f, 0f),Time.unscaledDeltaTime*10);
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + 0.1f;
+            OverheadText.text=$"PROPULSION    {(Ship.EngineOn?"ONLINE":"STANDBY")}\nFLIGHT ASSIST   {(Ship.AssistOn?"ENGAGED":"FREE DRIFT")}\nFLOOD {(Lighting.HeadlightsOn?"ON":"OFF")}     CABIN {(Lighting.CabinBright?"BRIGHT":"DIM")}";
             SpeedText.text=$"{Ship.Speed:000.0}";
             SystemsText.text=$"HULL / {Ship.Hull:000}%";
             FlightMode.text=!Ship.EngineOn?"PROPULSION / STANDBY":Ship.Brake?"DECELERATION / ACTIVE":Ship.Boost?"OVERDRIVE / ACTIVE":Ship.AssistOn?"FLIGHT ASSIST / ON":"FLIGHT ASSIST / OFF";

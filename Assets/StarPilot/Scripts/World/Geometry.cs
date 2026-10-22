@@ -110,6 +110,29 @@ namespace StarPilot
             obj.GetComponent<MeshFilter>().sharedMesh=mesh;obj.GetComponent<Renderer>().sharedMaterial=material;return obj;
         }
 
+        public GameObject PressureSleeve(Transform parent,Material material)
+        {
+            const int rings=48,sides=40;
+            var vertices=new Vector3[(rings+1)*(sides+1)];var triangles=new List<int>();
+            for(int row=0;row<=rings;row++)for(int col=0;col<=sides;col++)
+            {
+                float t=row/(float)rings,a=col*2*Mathf.PI/sides;
+                float envelope=Mathf.Sin(t*Mathf.PI);
+                float fold=.004f*Mathf.Sin(t*72+Mathf.Sin(a*3)*1.7f)*envelope*envelope;
+                float radius=Mathf.Lerp(.082f,.055f,t)+.009f*envelope+fold;
+                int index=row*(sides+1)+col;
+                vertices[index]=new Vector3(Mathf.Cos(a)*radius,Mathf.Sin(a)*radius*.91f,t-.5f);
+                if(row==rings || col==sides)continue;
+                int next=index+sides+1;
+                triangles.AddRange(new[]{index,index+1,next,index+1,next+1,next});
+            }
+            var mesh=new Mesh{name="Tailored sleeve / gathered fabric",vertices=vertices,triangles=triangles.ToArray()};
+            mesh.RecalculateNormals();var normals=mesh.normals;
+            for(int row=0;row<=rings;row++){int first=row*(sides+1),last=first+sides;normals[first]=normals[last]=(normals[first]+normals[last]).normalized;}
+            mesh.normals=normals;mesh.RecalculateBounds();owned.Add(mesh);
+            var obj=new GameObject("Tailored pressure sleeve",typeof(MeshFilter),typeof(MeshRenderer));obj.transform.SetParent(parent,false);
+            obj.GetComponent<MeshFilter>().sharedMesh=mesh;obj.GetComponent<MeshRenderer>().sharedMaterial=material;return obj;
+        }
         public void RefineSphere(GameObject sphere, int longitude = 128, int latitude = 64)
         {
             var vertices = new Vector3[(longitude + 1) * (latitude + 1)];

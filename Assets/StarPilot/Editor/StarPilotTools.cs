@@ -57,7 +57,7 @@ namespace StarPilot.Editor
                 string assetPath=path.Replace('\\','/');
                 var importer=AssetImporter.GetAtPath(assetPath) as TextureImporter;if(importer==null)continue;
                 bool normal=assetPath.Contains("nor_gl"),srgb=!normal && !assetPath.Contains("rough");
-                int size=assetPath.Contains("Marble")?4096:1024;
+                int size=assetPath.Contains("Marble")?4096:assetPath.Contains("Rock_")?1024:2048;
                 var type=normal?TextureImporterType.NormalMap:TextureImporterType.Default;
                 if(importer.textureType==type && importer.sRGBTexture==srgb && importer.maxTextureSize==size && importer.anisoLevel==8)continue;
                 importer.textureType=type;importer.sRGBTexture=srgb;importer.maxTextureSize=size;importer.anisoLevel=8;
@@ -119,6 +119,7 @@ namespace StarPilot.Editor
             EnsureArtImports();
             ConfigureXr();
             PlayerSettings.productName="STAR PILOT";
+            PlayerSettings.bundleVersion="0.3.0";
             PlayerSettings.companyName="Star Pilot Team";
             PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.FullScreenWindow;

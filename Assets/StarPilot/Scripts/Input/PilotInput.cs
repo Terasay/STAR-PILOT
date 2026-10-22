@@ -9,6 +9,7 @@ namespace StarPilot
     public sealed class PilotInput : MonoBehaviour
     {
         public ShipFlightController Ship;
+        public ShipLighting Lighting;
         public Transform View;
         public bool InMenu = true;
         public bool IsVr { get; set; }
@@ -47,6 +48,8 @@ namespace StarPilot
             {
                 if (kb.iKey.wasPressedThisFrame) Ship.ToggleEngine();
                 if (kb.tKey.wasPressedThisFrame) Ship.ToggleAssist();
+                if (kb.lKey.wasPressedThisFrame) Lighting.ToggleHeadlights();
+                if (kb.cKey.wasPressedThisFrame) Lighting.ToggleCabin();
                 if (kb.backspaceKey.wasPressedThisFrame) ResetRequested?.Invoke();
             }
             if (IsVr) ReadVr();
