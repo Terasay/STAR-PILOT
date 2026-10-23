@@ -10,6 +10,7 @@ namespace StarPilot
         public Instrument Kind;
         public ShipFlightController Ship;
         public FlightRoute Route;
+        public ExplorationController Expedition;
         static readonly Color Cyan=new Color(.23f,.83f,.86f), Dim=new Color(.06f,.22f,.26f),
             Pale=new Color(.68f,.91f,.9f), Amber=new Color(1f,.53f,.22f);
         float refresh;
@@ -35,7 +36,19 @@ namespace StarPilot
             Line(v,center+new Vector2(-113,0),center+new Vector2(113,0),1.8f,Dim);Line(v,center+new Vector2(0,-113),center+new Vector2(0,113),1.8f,Dim);
             Arc(v,center,114,0,360,2,Cyan);
             for(int i=0;i<48;i++){float a=i*7.5f;Line(v,center+Polar(117,a),center+Polar(i%4==0?124:120,a),i%4==0?2:1,i%4==0?Pale:Dim);}
-            for(int i=Route.Current;i<Route.Gates.Length;i++)
+            if(Expedition && Expedition.Active)
+            {
+                foreach(var site in Expedition.World.Sites)
+                {
+                    if(!site || !site.gameObject.activeInHierarchy || site.Exhausted)continue;
+                    Vector3 p=Ship.transform.InverseTransformPoint(site.Position);
+                    Vector2 mark=center+Vector2.ClampMagnitude(new Vector2(p.x,p.z)*.18f,100);
+                    bool selected=site==Expedition.Target;
+                    if(selected)Line(v,center,mark,2,new Color(.4f,.25f,.1f));
+                    Arc(v,mark,selected?9:3,0,360,selected?3:1,selected?Amber:site.Kind==SiteKind.Station?Cyan:Dim);
+                }
+            }
+            else for(int i=Route.Current;i<Route.Gates.Length;i++)
             {
                 Vector3 p=Ship.transform.InverseTransformPoint(Route.Gates[i].position);
                 Vector2 mark=center+Vector2.ClampMagnitude(new Vector2(p.x,p.z)*.18f,100);

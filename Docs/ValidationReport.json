@@ -6,12 +6,32 @@
         {
             "name": "01-menu.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,725"
+            "detail": "visible sample fraction 0,716"
         },
         {
             "name": "Scene initialized",
             "passed": true,
             "detail": "4 gates, pilot camera, live cockpit"
+        },
+        {
+            "name": "Unobstructed first-person view",
+            "passed": true,
+            "detail": "No active screen-space text, reticle, objective marker or impact overlay during flight"
+        },
+        {
+            "name": "Navigation on physical instrument",
+            "passed": true,
+            "detail": "Gate, range and course guidance belong to the cockpit screen"
+        },
+        {
+            "name": "Instrument guides to a target behind the ship",
+            "passed": true,
+            "detail": "ВПРАВО  180°\nПО ВЫСОТЕ  0°"
+        },
+        {
+            "name": "Pause is visible on the cockpit display",
+            "passed": true,
+            "detail": "Physical status display announces pause, including when the desktop menu is hidden in VR"
         },
         {
             "name": "Forward thrust",
@@ -99,6 +119,11 @@
             "detail": "Both visible glove rigs follow the control grip poses"
         },
         {
+            "name": "Glove fabric follows finger joints",
+            "passed": true,
+            "detail": "1595 cloth vertices deform at the middle finger joint"
+        },
+        {
             "name": "Keyboard headlights",
             "passed": true,
             "detail": "L switches both exterior floodlights off"
@@ -121,12 +146,12 @@
         {
             "name": "Navigation screen unobstructed",
             "passed": true,
-            "detail": "656 illuminated instrument pixels inside central display"
+            "detail": "938 illuminated instrument pixels inside central display"
         },
         {
             "name": "02-cockpit.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,806"
+            "detail": "visible sample fraction 0,802"
         },
         {
             "name": "03-controls.png rendered",
@@ -136,7 +161,7 @@
         {
             "name": "04-space.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,883"
+            "detail": "visible sample fraction 0,881"
         },
         {
             "name": "05-overhead.png rendered",
@@ -144,19 +169,184 @@
             "detail": "visible sample fraction 0,935"
         },
         {
+            "name": "08-glove-detail.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,827"
+        },
+        {
+            "name": "09-glove-open.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,799"
+        },
+        {
             "name": "06-headlights-off.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,874"
+            "detail": "visible sample fraction 0,872"
         },
         {
             "name": "07-headlights-on.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,874"
+            "detail": "visible sample fraction 0,872"
         },
         {
             "name": "Headlights illuminate geometry",
             "passed": true,
-            "detail": "asteroid centre brightness: off 0,177; on 0,288"
+            "detail": "asteroid centre brightness: off 0,177; on 0,293"
+        },
+        {
+            "name": "Exploration replaces training gates",
+            "passed": true,
+            "detail": "27 sectors resident; rings hidden"
+        },
+        {
+            "name": "Sector seed reproducibility",
+            "passed": true,
+            "detail": "Same address and seed reproduce a layout; another seed changes it"
+        },
+        {
+            "name": "Generated routes have clearance and service access",
+            "passed": true,
+            "detail": "49 neighborhoods: rock exclusion around sites and a station in each resident neighborhood"
+        },
+        {
+            "name": "Introductory wreck available",
+            "passed": true,
+            "detail": "A deterministic first destination exists near launch"
+        },
+        {
+            "name": "Scanner respects range",
+            "passed": true,
+            "detail": "ПОДЛЕТИТЕ БЛИЖЕ 160 М\nДЛЯ СКАНИРОВАНИЯ"
+        },
+        {
+            "name": "Scanner respects pointing",
+            "passed": true,
+            "detail": "НАПРАВЬТЕ НОС КОРАБЛЯ\nНА ВЫБРАННЫЙ СИГНАЛ"
+        },
+        {
+            "name": "Scanner respects occlusion",
+            "passed": true,
+            "detail": "ОБЪЕКТ ЗАКРЫТ ПРЕГРАДОЙ\nСМЕНИТЕ ПОЗИЦИЮ"
+        },
+        {
+            "name": "Keyboard drives physical scanner",
+            "passed": true,
+            "detail": "G drives scanner progress and the cockpit button lamp"
+        },
+        {
+            "name": "10-survey.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,795"
+        },
+        {
+            "name": "Wreck survey reveals cargo",
+            "passed": true,
+            "detail": "Four-second scan reveals recorder without awarding uncollected cargo"
+        },
+        {
+            "name": "Remote salvage is rejected",
+            "passed": true,
+            "detail": "Must approach within 32 m"
+        },
+        {
+            "name": "11-recovery.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,806"
+        },
+        {
+            "name": "Physical service recovers a black box",
+            "passed": true,
+            "detail": "Held SERVICE button recovers cargo and selects a return station"
+        },
+        {
+            "name": "Exploration progress survives save reload",
+            "passed": true,
+            "detail": "Atomic save contains scanned, collected and cargo states"
+        },
+        {
+            "name": "Service requires docking alignment",
+            "passed": true,
+            "detail": "ВЫРОВНЯЙТЕСЬ ПО ОСИ\nСТЫКОВОЧНОГО ПОРТА"
+        },
+        {
+            "name": "12-station.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,758"
+        },
+        {
+            "name": "Delivery rewards and empties hold",
+            "passed": true,
+            "detail": "Recorder delivered for 180 CR; cargo cleared and hull serviced"
+        },
+        {
+            "name": "Delivery cannot pay twice",
+            "passed": true,
+            "detail": "Empty hold servicing does not duplicate credits"
+        },
+        {
+            "name": "Anomaly yields research data",
+            "passed": true,
+            "detail": "Data occupies no physical cargo slots"
+        },
+        {
+            "name": "13-anomaly.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,801"
+        },
+        {
+            "name": "15-survey-controls.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,801"
+        },
+        {
+            "name": "Mouse scans through equipment console",
+            "passed": true,
+            "detail": "Tab + held left mouse button on SCAN completes the mineral survey"
+        },
+        {
+            "name": "Mineral samples respect cargo capacity",
+            "passed": true,
+            "detail": "Two-unit sample cannot fit in one remaining cargo slot"
+        },
+        {
+            "name": "Mineral recovery produces samples",
+            "passed": true,
+            "detail": "Recovered mineral occupies two slots and is worth 260 CR"
+        },
+        {
+            "name": "Mixed delivery upgrades survey equipment",
+            "passed": true,
+            "detail": "260 CR samples + 120 CR research cross 600 CR threshold: 200 m scanner and 6 cargo slots"
+        },
+        {
+            "name": "Keyboard selects next signal",
+            "passed": true,
+            "detail": "V selects a remaining survey target"
+        },
+        {
+            "name": "Keyboard selects a return station",
+            "passed": true,
+            "detail": "B selects nearest service station"
+        },
+        {
+            "name": "Floating origin preserves position and velocity",
+            "passed": true,
+            "detail": "Origin 3:1:-3; local (500.00, 200.00, 200.00); velocity (8.00, 3.00, -4.00)"
+        },
+        {
+            "name": "Distant sectors replace old sectors",
+            "passed": true,
+            "detail": "27 resident after travelling several kilometers"
+        },
+        {
+            "name": "Collected discoveries stay collected on return",
+            "passed": true,
+            "detail": "Unloading and reconstructing the starting sector cannot respawn the reward"
+        },
+        {
+            "name": "14-exploration-cockpit.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,800"
         },
         {
             "name": "No runtime errors",

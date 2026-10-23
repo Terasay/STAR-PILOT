@@ -56,6 +56,7 @@ namespace StarPilot
             StateChanged?.Invoke();
         }
         public void ToggleAssist() { AssistOn = !AssistOn; StateChanged?.Invoke(); }
+        public void Repair(){Hull=100;StateChanged?.Invoke();}
 
         public void ResetShip()
         {

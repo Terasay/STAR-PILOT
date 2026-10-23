@@ -77,7 +77,9 @@ namespace StarPilot
             if(hovered)Hint=hovered.Action switch {
                 CockpitAction.Engine=>"ЛКМ · ДВИГАТЕЛЬ", CockpitAction.Assist=>"ЛКМ · СТАБИЛИЗАЦИЯ",
                 CockpitAction.Brake=>"УДЕРЖИВАЙ ЛКМ · ТОРМОЗ", CockpitAction.Boost=>"УДЕРЖИВАЙ ЛКМ · УСКОРЕНИЕ",
-                CockpitAction.Headlights=>"ЛКМ · ВНЕШНИЕ ФАРЫ", _=>"ЛКМ · СВЕТ КАБИНЫ" };
+                CockpitAction.Headlights=>"ЛКМ · ВНЕШНИЕ ФАРЫ",CockpitAction.CabinLight=>"ЛКМ · СВЕТ КАБИНЫ",
+                CockpitAction.Scan=>"УДЕРЖИВАЙ ЛКМ · СКАНЕР",CockpitAction.Recover=>"УДЕРЖИВАЙ ЛКМ · ОБСЛУЖИТЬ",
+                CockpitAction.NextSignal=>"ЛКМ · СЛЕДУЮЩИЙ СИГНАЛ",_=>"ЛКМ · К СТАНЦИИ" };
             else Hint="TAB · ПАНЕЛЬ УПРАВЛЕНИЯ";
             if(Mouse.current.leftButton.wasPressedThisFrame && hovered){mouseControl=hovered;hovered.Press();}
             if(!Mouse.current.leftButton.isPressed && mouseControl){mouseControl.Release();mouseControl=null;}

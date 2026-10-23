@@ -119,7 +119,7 @@ namespace StarPilot.Editor
             EnsureArtImports();
             ConfigureXr();
             PlayerSettings.productName="STAR PILOT";
-            PlayerSettings.bundleVersion="0.4.0";
+            PlayerSettings.bundleVersion="0.5.0";
             PlayerSettings.companyName="Star Pilot Team";
             PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
             PlayerSettings.fullScreenMode=FullScreenMode.FullScreenWindow;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace StarPilot
 {
-    public enum CockpitAction { Engine, Assist, Brake, Boost, Headlights, CabinLight }
+    public enum CockpitAction { Engine, Assist, Brake, Boost, Headlights, CabinLight, Scan, Recover, NextSignal, Home }
 
     /// <summary>A physical switch and its lamp always display simulation state, regardless of input device.</summary>
     public sealed class CockpitControl : MonoBehaviour
@@ -10,15 +10,18 @@ namespace StarPilot
         public CockpitAction Action;
         public ShipFlightController Ship;
         public ShipLighting Lighting;
+        public ExplorationController Expedition;
         public Transform Handle;
         public Renderer Lamp;
         public Material Lit, Unlit;
         public bool Held { get; private set; }
-        public bool IsToggle => Action!=CockpitAction.Brake && Action!=CockpitAction.Boost;
+        float pressedUntil;
+        public bool IsToggle => Action==CockpitAction.Engine || Action==CockpitAction.Assist || Action==CockpitAction.Headlights || Action==CockpitAction.CabinLight;
         public bool Active => Action switch {
             CockpitAction.Engine=>Ship.EngineOn, CockpitAction.Assist=>Ship.AssistOn,
             CockpitAction.Brake=>Ship.Brake, CockpitAction.Boost=>Ship.Boost,
-            CockpitAction.Headlights=>Lighting.HeadlightsOn, _=>Lighting.CabinBright };
+            CockpitAction.Headlights=>Lighting.HeadlightsOn, CockpitAction.CabinLight=>Lighting.CabinBright,
+            CockpitAction.Scan=>Expedition && Expedition.IsScanning,CockpitAction.Recover=>Expedition && Expedition.IsInteracting,_=>Time.time<pressedUntil };
         public void Press()
         {
             if(!Ship.ControlsEnabled)return;
@@ -26,6 +29,8 @@ namespace StarPilot
             else if(Action==CockpitAction.Assist)Ship.ToggleAssist();
             else if(Action==CockpitAction.Headlights)Lighting.ToggleHeadlights();
             else if(Action==CockpitAction.CabinLight)Lighting.ToggleCabin();
+            else if(Action==CockpitAction.NextSignal){Expedition?.CycleTarget();pressedUntil=Time.time+.25f;}
+            else if(Action==CockpitAction.Home){Expedition?.SelectHome();pressedUntil=Time.time+.25f;}
             else Held=true;
         }
         public void Release(){Held=false;}

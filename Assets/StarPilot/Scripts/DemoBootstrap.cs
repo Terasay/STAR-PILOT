@@ -14,6 +14,9 @@ namespace StarPilot
         public ShipAudio Audio { get; private set; }
         public XrFlightMode Xr { get; private set; }
         public CockpitInteraction Cockpit { get; private set; }
+        public ExplorationController Expedition {get;private set;}
+        public ExplorationWorld World {get;private set;}
+        public bool Training=>!Expedition.Active;
         readonly List<Object> owned=new List<Object>();
 
         void Awake()
@@ -25,7 +28,12 @@ namespace StarPilot
             Input=Ship.gameObject.AddComponent<PilotInput>();Input.Ship=Ship;Input.View=PilotCamera.transform;
             Input.Lighting=Ship.GetComponent<ShipLighting>();
             Cockpit=Ship.GetComponent<CockpitInteraction>();Cockpit.Input=Input;
-            Audio=Ship.gameObject.AddComponent<ShipAudio>();Audio.Ship=Ship;
+            World=builder.ExplorationWorld;
+            Expedition=gameObject.AddComponent<ExplorationController>();Expedition.Initialize(Ship,World,Cockpit);
+            Input.Expedition=Expedition;displays.Expedition=Expedition;
+            foreach(var instrument in displays.Instruments)instrument.Expedition=Expedition;
+            Route.gameObject.SetActive(false);
+            Audio=Ship.gameObject.AddComponent<ShipAudio>();Audio.Ship=Ship;Audio.Expedition=Expedition;
             Xr=gameObject.AddComponent<XrFlightMode>();Xr.Demo=this;
             Hud=gameObject.AddComponent<DemoHud>();Hud.Demo=this;Hud.Input=Input;Hud.Ship=Ship;Hud.Route=Route;Hud.PilotCamera=PilotCamera;
             Hud.Build();
@@ -33,7 +41,16 @@ namespace StarPilot
                 gameObject.AddComponent<DemoSmokeTest>().Demo=this;
         }
 
-        public void ResetFlight() { Ship.ResetShip();Route.Restart(); }
+        public void ResetFlight()
+        {
+            if(Expedition.Active)Expedition.AbortSortie();
+            World.ReturnToOrigin();Ship.ResetShip();Route.Restart();
+        }
+        public void SetTraining(bool training)
+        {
+            if(Training==training)return;
+            ResetFlight();Expedition.SetActiveMode(!training);Route.gameObject.SetActive(training);
+        }
         public void RequestVr() { Xr.StartVr(); }
         void OnDestroy()
         {

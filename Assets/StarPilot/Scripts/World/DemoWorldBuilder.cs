@@ -11,6 +11,7 @@ namespace StarPilot
         readonly Geometry g;
         readonly List<Object> owned;
         Material hull, trim, dark, cyan, white, amber, rock, solar;
+        public ExplorationWorld ExplorationWorld {get;private set;}
         static readonly Color Cyan = new Color(0.18f, 0.8f, 0.92f);
         static readonly Color TextColor = new Color(0.72f, 0.84f, 0.89f);
         public DemoWorldBuilder(List<Object> ownedObjects) { owned = ownedObjects; g = new Geometry(owned); }
@@ -102,7 +103,8 @@ namespace StarPilot
             var atmosphereMaterial=new Material(Resources.Load<Shader>("StarPilot/Atmosphere")){name="Blue atmospheric scattering"};owned.Add(atmosphereMaterial);
             var atmosphere=g.Sphere("Atmospheric limb",space,planetPosition,Vector3.one*10600,atmosphereMaterial);
             atmosphere.GetComponent<MeshFilter>().sharedMesh=planet.GetComponent<MeshFilter>().sharedMesh;
-            BuildStation(space,new Vector3(170,16,1060));
+            Transform station=BuildStation(space,new Vector3(170,16,1060));
+            var debris=new GameObject("Training debris field").transform;debris.SetParent(space,false);
             var random=new System.Random(1729);
             for (int i=0;i<94;i++)
             {
@@ -114,7 +116,7 @@ namespace StarPilot
                 if(i==0){position=new Vector3(71,32,205);size=37;}
                 if(i==1){position=new Vector3(-83,62,310);size=44;}
                 if(i==2){position=new Vector3(135,-72,410);size=52;}
-                var asteroid=g.Sphere("Asteroid "+i,space,position,new Vector3(size,size*(.65f+(float)random.NextDouble()*.35f),size*.86f),rock,true);
+                var asteroid=g.Sphere("Asteroid "+i,debris,position,new Vector3(size,size*(.65f+(float)random.NextDouble()*.35f),size*.86f),rock,true);
                 asteroid.transform.rotation=RandomRotation(random);
                 g.RefineSphere(asteroid,i<20?64:32,i<20?40:24);
                 var filter=asteroid.GetComponent<MeshFilter>();var mesh=filter.sharedMesh;mesh.name="Fractured regolith "+i;
@@ -140,9 +142,12 @@ namespace StarPilot
                 mesh.vertices=vertices;mesh.RecalculateNormals();mesh.RecalculateBounds();
                 // Conservative sphere collisions are sufficient for this distant debris field.
             }
+            ExplorationWorld=new GameObject("Exploration world",typeof(ExplorationWorld)).GetComponent<ExplorationWorld>();
+            ExplorationWorld.transform.SetParent(root,false);
+            ExplorationWorld.Initialize(root.GetComponentInChildren<ShipFlightController>(),space,debris,station,g,rock,hull,trim,dark,cyan,amber,solar);
         }
 
-        void BuildStation(Transform root,Vector3 position)
+        Transform BuildStation(Transform root,Vector3 position)
         {
             var station=new GameObject("KEPLER / orbital research station").transform;station.SetParent(root,false);station.localPosition=position;
             station.localRotation=Quaternion.Euler(0,-18,-12);
@@ -180,6 +185,7 @@ namespace StarPilot
             var sign=CockpitDisplays.Screen(station,"Station callsign",new Vector3(0,18,-40),new Vector2(1100,220),Vector3.zero);
             sign.transform.localScale=Vector3.one*.018f;
             CockpitDisplays.Text(sign.transform,"KEPLER","K E P L E R",100,TextColor,Vector2.zero,new Vector2(1100,220),TextAnchor.MiddleCenter);
+            return station;
         }
 
         FlightRoute BuildRoute(Transform root,ShipFlightController ship)

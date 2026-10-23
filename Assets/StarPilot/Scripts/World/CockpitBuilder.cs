@@ -49,6 +49,14 @@ namespace StarPilot
             for(int i=0;i<3;i++)Label(right.transform,"Channel "+i,new[]{"ENGINE","ASSIST","HULL"}[i],28,new Vector2(128,112-i*55),new Vector2(200,36));
             displays.StatusText=CockpitDisplays.Text(right.transform,"Primary status","",30,Cyan,new Vector2(0,-146),new Vector2(530,42),TextAnchor.MiddleCenter);
             displays.InteractionText=CockpitDisplays.Text(right.transform,"Control feedback","",24,Ink,new Vector2(0,-186),new Vector2(540,34),TextAnchor.MiddleCenter);
+            var operations=CockpitDisplays.Rect(right.transform,"Survey operations",new Vector2(0,28),new Vector2(552,310),new Color(.003f,.013f,.019f));
+            displays.OperationsPanel=operations.gameObject;
+            displays.MissionTitle=CockpitDisplays.Text(operations.transform,"Operation title","",29,Cyan,new Vector2(0,112),new Vector2(530,44),TextAnchor.MiddleCenter);
+            displays.MissionInstruction=CockpitDisplays.Text(operations.transform,"Flight task","",27,Ink,new Vector2(0,48),new Vector2(530,100),TextAnchor.MiddleCenter);
+            CockpitDisplays.Rect(operations.transform,"Scan track",new Vector2(0,-23),new Vector2(480,7),new Color(.06f,.18f,.21f));
+            displays.MissionProgress=CockpitDisplays.Rect(operations.transform,"Scan progress",new Vector2(-240,-23),new Vector2(0,7),Cyan).rectTransform;
+            displays.MissionCargo=CockpitDisplays.Text(operations.transform,"Payload","",26,Ink,new Vector2(0,-65),new Vector2(530,40),TextAnchor.MiddleCenter);
+            displays.MissionAccount=CockpitDisplays.Text(operations.transform,"Research account","",23,Ink,new Vector2(0,-103),new Vector2(540,35),TextAnchor.MiddleCenter);
 
             var navRoot=new GameObject("Central navigation housing").transform;navRoot.SetParent(cockpit,false);
             navRoot.localPosition=new Vector3(0,1.09f,1.1f);navRoot.localRotation=Quaternion.Euler(14,0,0);
@@ -85,6 +93,7 @@ namespace StarPilot
             }
             displays.Instruments=instruments.ToArray();
             Controls(cockpit,displays,interaction);
+            SurveyControls(cockpit,displays,interaction);
             var hands=ship.gameObject.AddComponent<PilotHands>();hands.Interaction=interaction;
             hands.LeftRest=Rest(displays.Throttle,new Vector3(0,.30f,-.028f),new Vector3(8,-8,0));
             hands.RightRest=Rest(displays.Stick,new Vector3(.054f,.245f,-.025f),new Vector3(22,-12,-48));
@@ -286,6 +295,28 @@ namespace StarPilot
         }
         static Transform Rest(Transform parent,Vector3 position,Vector3 euler)
         {var t=new GameObject("Grip pose").transform;t.SetParent(parent,false);t.localPosition=position;t.localRotation=Quaternion.Euler(euler);return t;}
+        void SurveyControls(Transform parent,CockpitDisplays displays,CockpitInteraction interaction)
+        {
+            var bank=new GameObject("Survey equipment console").transform;bank.SetParent(parent,false);
+            bank.localPosition=new Vector3(0,.76f,.65f);bank.localRotation=Quaternion.Euler(62,0,0);
+            g.Panel("Survey console surround",bank,Vector3.zero,new Vector3(.68f,.19f,.055f),hull);
+            var captions=new[]{"SCAN [G]","SERVICE [X]","NEXT [V]","BASE [B]"};
+            for(int i=0;i<4;i++)
+            {
+                var control=new GameObject(captions[i],typeof(BoxCollider),typeof(CockpitControl)).GetComponent<CockpitControl>();
+                control.transform.SetParent(bank,false);control.transform.localPosition=new Vector3(-.24f+i*.16f,.015f,-.034f);
+                control.Action=(CockpitAction)((int)CockpitAction.Scan+i);control.Ship=displays.Ship;control.Lit=i==1?amber:cyan;control.Unlit=dark;
+                var collider=control.GetComponent<BoxCollider>();collider.size=new Vector3(.13f,.13f,.09f);collider.isTrigger=true;
+                g.Panel("Equipment key socket",control.transform,Vector3.zero,new Vector3(.123f,.085f,.02f),dark);
+                control.Handle=new GameObject("Equipment key mechanism").transform;control.Handle.SetParent(control.transform,false);
+                g.Panel("Equipment key",control.Handle,new Vector3(0,0,-.018f),new Vector3(.10f,.067f,.025f),face);
+                control.Lamp=g.Box("Equipment indicator",control.Handle,new Vector3(0,.024f,-.032f),new Vector3(.058f,.005f,.004f),cyan).GetComponent<Renderer>();
+                var label=CockpitDisplays.Screen(control.transform,"Equipment legend",new Vector3(0,-.057f,-.029f),new Vector2(150,32),Vector3.zero);
+                label.transform.localScale=Vector3.one*.00085f;
+                Label(label.transform,"Legend",captions[i],20,Vector2.zero,new Vector2(150,32),TextAnchor.MiddleCenter);
+                interaction.Controls.Add(control);
+            }
+        }
         static Font instrumentFont;
         static Text Label(Transform p,string name,string text,int size,Vector2 position,Vector2 rect,TextAnchor anchor=TextAnchor.UpperLeft)
         {

@@ -10,6 +10,7 @@ namespace StarPilot
     {
         public ShipFlightController Ship;
         public ShipLighting Lighting;
+        public ExplorationController Expedition;
         public Transform View;
         public bool InMenu = true;
         public bool IsVr { get; set; }
@@ -30,6 +31,7 @@ namespace StarPilot
         void Update()
         {
             Keyboard kb = Keyboard.current;
+            if(Expedition){Expedition.ScanRequested=!InMenu && !IsVr && kb!=null && kb.gKey.isPressed;Expedition.InteractRequested=!InMenu && !IsVr && kb!=null && kb.xKey.isPressed;}
             if (IsVr)
             {
                 InputDevices.GetDeviceAtXRNode(XRNode.LeftHand).TryGetFeatureValue(CommonUsages.menuButton, out bool menu);
@@ -51,6 +53,8 @@ namespace StarPilot
                 if (kb.lKey.wasPressedThisFrame) Lighting.ToggleHeadlights();
                 if (kb.cKey.wasPressedThisFrame) Lighting.ToggleCabin();
                 if (kb.backspaceKey.wasPressedThisFrame) ResetRequested?.Invoke();
+                if (kb.vKey.wasPressedThisFrame && Expedition) Expedition.CycleTarget();
+                if (kb.bKey.wasPressedThisFrame && Expedition) Expedition.SelectHome();
             }
             if (IsVr) ReadVr();
             else ReadDesktop(kb);

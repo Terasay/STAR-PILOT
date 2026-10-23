@@ -7,8 +7,9 @@ namespace StarPilot
     public sealed class ShipAudio : MonoBehaviour
     {
         public ShipFlightController Ship;
-        AudioSource source;
-        AudioClip loop;
+        public ExplorationController Expedition;
+        AudioSource source, instruments;
+        AudioClip loop, confirmation;
         public float ImpactFlash { get; private set; }
 
         void Start()
@@ -33,7 +34,18 @@ namespace StarPilot
             source.volume = 0f;
             source.Play();
             Ship.Impact += OnImpact;
+            instruments=gameObject.AddComponent<AudioSource>();instruments.playOnAwake=false;instruments.volume=.22f;
+            float[] cue=new float[sampleRate/2];
+            for(int i=0;i<cue.Length;i++)
+            {
+                float t=i/(float)sampleRate,phase=t<.2f?t:t-.25f;
+                if(phase>=0 && phase<.2f)cue[i]=Mathf.Sin(2*Mathf.PI*(t<.2f?660:990)*phase)*Mathf.Sin(Mathf.PI*phase/.2f)*.4f;
+            }
+            confirmation=AudioClip.Create("Survey confirmation",cue.Length,1,sampleRate,false);confirmation.SetData(cue,0);
+            if(Expedition)Expedition.Feedback+=OnSurvey;
         }
+
+        void OnSurvey(bool success){if(success && instruments)instruments.PlayOneShot(confirmation);}
 
         void OnImpact(float severity, Vector3 localPoint)
         {
@@ -53,7 +65,9 @@ namespace StarPilot
         void OnDestroy()
         {
             if (Ship) Ship.Impact -= OnImpact;
+            if (Expedition) Expedition.Feedback -= OnSurvey;
             if (loop) Destroy(loop);
+            if (confirmation) Destroy(confirmation);
         }
     }
 }

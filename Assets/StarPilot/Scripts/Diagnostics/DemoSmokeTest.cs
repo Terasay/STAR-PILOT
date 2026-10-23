@@ -59,7 +59,7 @@ namespace StarPilot
             yield return new WaitForSecondsRealtime(1.5f);
             CaptureFrame("01-menu.png");
             yield return new WaitForSecondsRealtime(.5f);
-            Demo.Hud.SetMenu(false);Demo.Input.enabled=false;
+            Demo.SetTraining(true);Demo.Hud.SetMenu(false);Demo.Input.enabled=false;
             var ship=Demo.Ship;
             CheckResult("Scene initialized",Demo.Route.Gates.Length==4 && Camera.main==Demo.PilotCamera,"4 gates, pilot camera, live cockpit");
             CheckResult("Unobstructed first-person view",Demo.Hud.FlightOverlayHidden && Demo.Hud.DesktopCanvas.GetComponentsInChildren<UnityEngine.UI.Graphic>().Length==0,
@@ -204,11 +204,133 @@ namespace StarPilot
             float lit=CaptureFrame("07-headlights-on.png");
             CheckResult("Headlights illuminate geometry",lit>unlit+.025f,$"asteroid centre brightness: off {unlit:F3}; on {lit:F3}");
             Demo.PilotCamera.transform.localRotation=Quaternion.identity;
+            yield return ExplorationChecks();
             yield return new WaitForSecondsRealtime(.5f);
             CheckResult("No runtime errors",report.errors.Count==0,$"errors {report.errors.Count}");
             File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
             bool passed=report.errors.Count==0;foreach(var check in report.checks)passed&=check.passed;
             Application.Quit(passed?0:1);
+        }
+        IEnumerator ExplorationChecks()
+        {
+            var ship=Demo.Ship;var expedition=Demo.Expedition;var world=Demo.World;
+            Demo.SetTraining(false);Demo.Hud.SetMenu(false);Demo.Input.enabled=false;
+            if(!ship.EngineOn)ship.ToggleEngine();
+            yield return new WaitForSeconds(.8f);
+            CheckResult("Exploration replaces training gates",!Demo.Route.gameObject.activeInHierarchy && world.LoadedSectorCount>0 && world.LoadedSectorCount<=27,
+                $"{world.LoadedSectorCount} sectors resident; rings hidden");
+            var key=new SectorAddress(17,-8,31);var layout=world.LayoutSource.Generate(world.Seed,key);
+            CheckResult("Sector seed reproducibility",JsonUtility.ToJson(layout)==JsonUtility.ToJson(world.LayoutSource.Generate(world.Seed,key)) &&
+                JsonUtility.ToJson(layout)!=JsonUtility.ToJson(world.LayoutSource.Generate(world.Seed+1,key)),"Same address and seed reproduce a layout; another seed changes it");
+            bool safe=true,stations=true;
+            for(int x=-3;x<=3;x++)for(int z=-3;z<=3;z++)
+            {
+                var sample=world.LayoutSource.Generate(world.Seed,new SectorAddress(x,2,z));
+                for(int i=0;i<sample.Rocks.Length;i++)foreach(var site in sample.Sites)
+                    safe&=Vector3.Distance(sample.Rocks[i],site.Position)>=sample.RockSizes[i]+99;
+                bool reachable=false;
+                for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)for(int dz=-1;dz<=1;dz++)
+                    foreach(var site in world.LayoutSource.Generate(world.Seed,new SectorAddress(x+dx,2+dy,z+dz)).Sites)reachable|=site.Kind==SiteKind.Station;
+                stations&=reachable;
+            }
+            CheckResult("Generated routes have clearance and service access",safe && stations,"49 neighborhoods: rock exclusion around sites and a station in each resident neighborhood");
+            ExplorationSite wreck=FindSite($"{world.Seed}/0:0:0/0");
+            CheckResult("Introductory wreck available",wreck && wreck.Kind==SiteKind.Wreck,"A deterministic first destination exists near launch");
+            if(!wreck)yield break;
+            expedition.SelectTarget(wreck);PlaceShip(wreck.Position-Vector3.forward*220,Quaternion.identity);
+            expedition.ScanRequested=true;yield return new WaitForSeconds(.35f);
+            CheckResult("Scanner respects range",!wreck.Scanned && expedition.Progress==0,expedition.Instruction);
+            PlaceShip(wreck.Position-Vector3.forward*100,Quaternion.Euler(0,90,0));yield return new WaitForSeconds(.35f);
+            CheckResult("Scanner respects pointing",!wreck.Scanned && expedition.Progress==0,expedition.Instruction);
+            PlaceShip(wreck.Position-Vector3.forward*100,Quaternion.identity);
+            var obstruction=GameObject.CreatePrimitive(PrimitiveType.Cube);obstruction.name="Scanner test occluder";
+            obstruction.transform.position=wreck.Position-Vector3.forward*50;obstruction.transform.localScale=new Vector3(20,20,3);
+            yield return new WaitForSeconds(.35f);
+            CheckResult("Scanner respects occlusion",expedition.Progress==0 && expedition.Instruction.Contains("ПРЕГРАДОЙ"),expedition.Instruction);
+            Destroy(obstruction);expedition.ScanRequested=false;yield return null;
+            var keys=InputSystem.AddDevice<Keyboard>("StarPilotSurveyKeyboard");injectedKeyboard=keys;Demo.Input.enabled=true;
+            InputSystem.QueueStateEvent(keys,new KeyboardState(Key.G));yield return new WaitForSeconds(1.2f);
+            CheckResult("Keyboard drives physical scanner",expedition.IsScanning && Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Scan).Active,"G drives scanner progress and the cockpit button lamp");
+            CaptureFrame("10-survey.png");
+            yield return new WaitForSeconds(3.2f);
+            CheckResult("Wreck survey reveals cargo",wreck.Scanned && !wreck.Collected && expedition.Save.Cargo==0 && wreck.CargoVisual.gameObject.activeSelf,"Four-second scan reveals recorder without awarding uncollected cargo");
+            InputSystem.QueueStateEvent(keys,new KeyboardState(Key.X));yield return new WaitForSeconds(.3f);
+            CheckResult("Remote salvage is rejected",!wreck.Collected && expedition.Save.Cargo==0,"Must approach within 32 m");
+            InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;yield return null;Demo.Input.enabled=false;
+            PlaceShip(wreck.Position-Vector3.forward*24,Quaternion.identity);
+            var service=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Recover);service.Press();
+            yield return new WaitForSeconds(1);CaptureFrame("11-recovery.png");yield return new WaitForSeconds(1.8f);service.Release();
+            CheckResult("Physical service recovers a black box",wreck.Collected && expedition.Save.Cargo==1 && expedition.Save.CargoValue==180 && expedition.Target.Kind==SiteKind.Station,"Held SERVICE button recovers cargo and selects a return station");
+            var saved=ExpeditionSave.Load(expedition.SavePath);
+            CheckResult("Exploration progress survives save reload",saved.Cargo==1 && saved.Collected.Contains(wreck.Id) && saved.Scanned.Contains(wreck.Id),"Atomic save contains scanned, collected and cargo states");
+            var station=expedition.Target;int credits=expedition.Save.Credits;
+            PlaceShip(station.Position-station.transform.forward*10,Quaternion.LookRotation(-station.transform.forward));expedition.InteractRequested=true;
+            yield return new WaitForSeconds(.35f);
+            CheckResult("Service requires docking alignment",expedition.Save.Cargo==1 && expedition.Progress==0,expedition.Instruction);
+            PlaceShip(station.Position-station.transform.forward*10,station.transform.rotation);
+            yield return new WaitForSeconds(1);CaptureFrame("12-station.png");yield return new WaitForSeconds(1.3f);expedition.InteractRequested=false;
+            CheckResult("Delivery rewards and empties hold",expedition.Save.Cargo==0 && expedition.Save.Credits==credits+180 && ship.Hull==100,"Recorder delivered for 180 CR; cargo cleared and hull serviced");
+            expedition.SelectTarget(station);expedition.InteractRequested=true;yield return new WaitForSeconds(2.2f);expedition.InteractRequested=false;
+            CheckResult("Delivery cannot pay twice",expedition.Save.Credits==credits+180,"Empty hold servicing does not duplicate credits");
+            // The anomaly is a distinct loop: data is scanned directly, without a cargo pickup.
+            var anomaly=FindSite($"{world.Seed}/0:0:0/1");expedition.SelectTarget(anomaly);
+            PlaceShip(anomaly.Position-Vector3.forward*85,Quaternion.identity);expedition.ScanRequested=true;
+            yield return new WaitForSeconds(4.3f);expedition.ScanRequested=false;
+            CheckResult("Anomaly yields research data",anomaly.Exhausted && expedition.Save.Data==1 && expedition.Save.Cargo==0,"Data occupies no physical cargo slots");
+            CaptureFrame("13-anomaly.png");
+            var mineral=FindSite($"{world.Seed}/0:0:0/2");expedition.SelectTarget(mineral);
+            PlaceShip(mineral.Position-Vector3.forward*85,Quaternion.identity);
+            Demo.Input.enabled=true;
+            var scanButton=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Scan);
+            var mouse=InputSystem.AddDevice<Mouse>("StarPilotSurveyMouse");injectedMouse=mouse;
+            InputSystem.QueueStateEvent(keys,new KeyboardState(Key.LeftAlt));
+            InputSystem.QueueStateEvent(mouse,new MouseState{delta=new Vector2(0,-466.6667f)});yield return null;yield return null;
+            Vector3 screen=Demo.PilotCamera.WorldToScreenPoint(scanButton.transform.position);
+            InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Tab));
+            InputSystem.QueueStateEvent(mouse,new MouseState{position=new Vector2(screen.x,screen.y)});yield return null;yield return null;
+            InputSystem.QueueStateEvent(mouse,new MouseState{position=new Vector2(screen.x,screen.y)}.WithButton(MouseButton.Left));
+            yield return new WaitForSeconds(1);CaptureFrame("15-survey-controls.png");yield return new WaitForSeconds(3.4f);
+            CheckResult("Mouse scans through equipment console",mineral.Scanned && !mineral.Collected,"Tab + held left mouse button on SCAN completes the mineral survey");
+            InputSystem.QueueStateEvent(mouse,new MouseState{position=new Vector2(screen.x,screen.y)});InputSystem.QueueStateEvent(keys,new KeyboardState());
+            yield return null;yield return null;InputSystem.RemoveDevice(mouse);Demo.Input.enabled=false;Demo.PilotCamera.transform.localRotation=Quaternion.identity;
+            PlaceShip(mineral.Position-Vector3.forward*26,Quaternion.identity);
+            expedition.Save.Cargo=3;expedition.InteractRequested=true;yield return new WaitForSeconds(.35f);
+            CheckResult("Mineral samples respect cargo capacity",!mineral.Collected && expedition.Progress==0 && expedition.Instruction.Contains("ЗАПОЛНЕН"),"Two-unit sample cannot fit in one remaining cargo slot");
+            expedition.Save.Cargo=0;yield return new WaitForSeconds(2.8f);expedition.InteractRequested=false;
+            CheckResult("Mineral recovery produces samples",mineral.Collected && expedition.Save.Cargo==2 && expedition.Save.CargoValue==260,"Recovered mineral occupies two slots and is worth 260 CR");
+            // Set an account just below the upgrade threshold; deliver real recovered cargo and data.
+            expedition.Save.Credits=599;station=expedition.Target;PlaceShip(station.Position-station.transform.forward*10,station.transform.rotation);
+            expedition.InteractRequested=true;yield return new WaitForSeconds(2.3f);expedition.InteractRequested=false;
+            CheckResult("Mixed delivery upgrades survey equipment",expedition.Save.Credits==979 && expedition.Save.Data==0 && expedition.Save.Cargo==0 && expedition.ScanRange==200 && expedition.Capacity==6,
+                "260 CR samples + 120 CR research cross 600 CR threshold: 200 m scanner and 6 cargo slots");
+            int finalCredits=expedition.Save.Credits;
+            // Switching destinations and returning are available through keyboard and physical controls.
+            Demo.Input.enabled=true;InputSystem.QueueStateEvent(keys,new KeyboardState(Key.V));yield return null;yield return null;
+            CheckResult("Keyboard selects next signal",expedition.Target && expedition.Target.Kind!=SiteKind.Station,"V selects a remaining survey target");
+            InputSystem.QueueStateEvent(keys,new KeyboardState(Key.B));yield return null;yield return null;
+            CheckResult("Keyboard selects a return station",expedition.Target && expedition.Target.Kind==SiteKind.Station,"B selects nearest service station");
+            InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;yield return null;Demo.Input.enabled=false;InputSystem.RemoveDevice(keys);
+            Vector3 far=new Vector3(3500,1200,-2800),velocity=new Vector3(8,3,-4);
+            PlaceShip(far,Quaternion.identity);ship.Body.linearVelocity=velocity;world.RebaseIfNeeded();
+            Vector3 absolute=new Vector3(world.Origin.X*1000,world.Origin.Y*1000,world.Origin.Z*1000)+ship.Body.position;
+            CheckResult("Floating origin preserves position and velocity",Vector3.Distance(absolute,far)<.01f && Vector3.Distance(ship.Body.linearVelocity,velocity)<.01f && !world.Origin.Equals(default(SectorAddress)),
+                $"Origin {world.Origin}; local {ship.Body.position}; velocity {ship.Body.linearVelocity}");
+            ship.Body.linearVelocity=Vector3.zero;yield return new WaitForSeconds(1);
+            CheckResult("Distant sectors replace old sectors",world.LoadedSectorCount<=27 && world.LoadedSectorCount>0 && !FindSite(wreck.Id),$"{world.LoadedSectorCount} resident after travelling several kilometers");
+            Demo.ResetFlight();ship.ToggleEngine();yield return new WaitForSeconds(.9f);
+            var returned=FindSite($"{world.Seed}/0:0:0/0");
+            CheckResult("Collected discoveries stay collected on return",returned && returned.Exhausted && !returned.CargoVisual.gameObject.activeSelf && expedition.Save.Credits==finalCredits,"Unloading and reconstructing the starting sector cannot respawn the reward");
+            CaptureFrame("14-exploration-cockpit.png");
+        }
+        ExplorationSite FindSite(string id)
+        {
+            foreach(var site in Demo.World.Sites)if(site && site.Id==id)return site;return null;
+        }
+        void PlaceShip(Vector3 position,Quaternion rotation)
+        {
+            var ship=Demo.Ship;ship.Translation=ship.Rotation=Vector3.zero;ship.Brake=ship.Boost=false;
+            ship.Body.position=position;ship.Body.rotation=rotation;ship.Body.linearVelocity=ship.Body.angularVelocity=Vector3.zero;
+            ship.transform.SetPositionAndRotation(position,rotation);Physics.SyncTransforms();
         }
         static IEnumerator Steps(int count) { for(int i=0;i<count;i++)yield return new WaitForFixedUpdate(); }
         float CaptureFrame(string name)

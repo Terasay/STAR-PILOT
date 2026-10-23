@@ -11,6 +11,10 @@ namespace StarPilot
         public Text SpeedText, SystemsText, NavigationText, FlightMode, AttitudeText, OverheadText;
         public Text RouteText, GuidanceText, StatusText, InteractionText;
         public CockpitInteraction Interaction;
+        public ExplorationController Expedition;
+        public GameObject OperationsPanel;
+        public Text MissionTitle,MissionInstruction,MissionCargo,MissionAccount;
+        public RectTransform MissionProgress;
         public ShipLighting Lighting;
         public RectTransform[] AxisIndicators=new RectTransform[3];
         public FlightInstrument[] Instruments;
@@ -35,14 +39,45 @@ namespace StarPilot
             GuidanceText.text=Route.Completed?"ЧЕТЫРЕ МАЯКА · ГОТОВО":
                 $"{(Mathf.Abs(heading)<4?"ПО КУРСУ":heading>0?"ВПРАВО":"ВЛЕВО")}  {Mathf.Abs(heading):0}°\n"+
                 $"{(Mathf.Abs(elevation)<3?"ПО ВЫСОТЕ":elevation>0?"ВЫШЕ":"НИЖЕ")}  {Mathf.Abs(elevation):0}°";
+            bool exploring=Expedition && Expedition.Active;
+            OperationsPanel.SetActive(exploring);SystemsText.gameObject.SetActive(!exploring);
+            if(exploring)
+            {
+                var site=Expedition.Target;
+                float distance=site?Vector3.Distance(site.Position,Ship.transform.position):0;
+                RouteText.text=site?site.Title:"ПОИСК СИГНАЛА";
+                NavigationText.text=!site?"—":distance<1000?$"{distance:0} м":$"{distance/1000:0.0} км";
+                Vector3 relative=site?Ship.transform.InverseTransformPoint(site.Position):Vector3.forward;
+                heading=Mathf.Atan2(relative.x,relative.z)*Mathf.Rad2Deg;
+                elevation=Mathf.Atan2(relative.y,new Vector2(relative.x,relative.z).magnitude)*Mathf.Rad2Deg;
+                GuidanceText.text=$"{(Mathf.Abs(heading)<4?"ПО КУРСУ":heading>0?"ВПРАВО":"ВЛЕВО")} {Mathf.Abs(heading):0}°\n"+
+                    $"{(Mathf.Abs(elevation)<3?"ПО ВЫСОТЕ":elevation>0?"ВЫШЕ":"НИЖЕ")} {Mathf.Abs(elevation):0}°";
+                if(site && site.Kind==SiteKind.Station && distance<26)
+                {
+                    Vector3 axis=Ship.transform.InverseTransformDirection(site.transform.forward);
+                    float yaw=Mathf.Atan2(axis.x,axis.z)*Mathf.Rad2Deg;
+                    float pitch=Mathf.Atan2(axis.y,new Vector2(axis.x,axis.z).magnitude)*Mathf.Rad2Deg;
+                    GuidanceText.text=$"ОСЬ: {(Mathf.Abs(yaw)<4?"ПРЯМО":yaw>0?"ВПРАВО":"ВЛЕВО")} {Mathf.Abs(yaw):0}°\n"+
+                        $"{(Mathf.Abs(pitch)<3?"ПО ВЫСОТЕ":pitch>0?"ВЫШЕ":"НИЖЕ")} {Mathf.Abs(pitch):0}°";
+                }
+                MissionTitle.text=Expedition.IsScanning?$"СКАНИРОВАНИЕ {Expedition.Progress*100:0}%":Expedition.IsInteracting?$"ОПЕРАЦИЯ {Expedition.Progress*100:0}%":site?site.Kind==SiteKind.Station?"ДОСТАВКА И СЕРВИС":"ИССЛЕДОВАТЬ СИГНАЛ":"ИССЛЕДОВАТЕЛЬСКИЙ ВЫЛЕТ";
+                MissionInstruction.text=Expedition.Instruction;
+                MissionCargo.text=Expedition.CargoSummary;
+                MissionAccount.text=Expedition.AccountSummary+$"   КОРПУС {Ship.Hull:0}%";
+                MissionProgress.sizeDelta=new Vector2(480*Expedition.Progress,7);
+                MissionProgress.anchoredPosition=new Vector2(-240+240*Expedition.Progress,-23);
+            }
             StatusText.text=!Ship.ControlsEnabled?"ПОЛЁТ ПРИОСТАНОВЛЕН":Ship.Hull<=0?"КОРПУС РАЗРУШЕН":Ship.Hull<35?"ПОВРЕЖДЕНИЕ КОРПУСА":!Ship.EngineOn?"ДВИГАТЕЛЬ ВЫКЛ.":Ship.Brake?"ТОРМОЖЕНИЕ":Ship.Boost?"УСКОРЕНИЕ":"СИСТЕМЫ В НОРМЕ";
             StatusText.color=Ship.Hull<35?new Color(1,.42f,.21f):new Color(.62f,.89f,.88f);
+            StatusText.fontSize=exploring && !string.IsNullOrEmpty(Expedition.Notice)?22:30;
+            if(exploring && Ship.ControlsEnabled && Ship.Hull>=35 && Ship.EngineOn && !string.IsNullOrEmpty(Expedition.Notice))StatusText.text=Expedition.Notice;
+            if(exploring && !Expedition.SavingAvailable)StatusText.text="СОХРАНЕНИЕ НЕДОСТУПНО";
             bool desktop=Interaction.Input && !Interaction.Input.IsVr;
             InteractionText.text=!Ship.ControlsEnabled?(desktop?"ESC · ПРОДОЛЖИТЬ":"КНОПКА МЕНЮ · ПРОДОЛЖИТЬ"):
                 Ship.Hull<=0?(desktop?"BACKSPACE · НОВЫЙ ВЫЛЕТ":"ТРЕБУЕТСЯ ПЕРЕЗАПУСК"):
                 desktop && Interaction.Input.CockpitPointer?Interaction.Hint:
                 !Ship.EngineOn?(desktop?"I / ENGINE · ВКЛЮЧИТЬ":"ПЕРЕКЛЮЧАТЕЛЬ ENGINE"):
-                desktop?"TAB · ПРИБОРЫ    H · СПРАВКА":"ПРЯМОЕ УПРАВЛЕНИЕ";
+                desktop?(exploring?"V · СЛЕДУЮЩИЙ    B · БАЗА":"TAB · ПРИБОРЫ    H · СПРАВКА"):"ПРЯМОЕ УПРАВЛЕНИЕ";
             Vector3 angle=Ship.transform.eulerAngles;
             AttitudeText.text=$"P {Mathf.DeltaAngle(0,angle.x):+000;-000;000}   Y {angle.y:000}\nR {Mathf.DeltaAngle(0,angle.z):+000;-000;000}";
             float[] axes={Ship.Translation.x,Ship.Translation.y,Ship.Rotation.z};
