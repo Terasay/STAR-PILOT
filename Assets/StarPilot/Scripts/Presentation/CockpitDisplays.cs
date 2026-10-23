@@ -15,6 +15,9 @@ namespace StarPilot
         public GameObject OperationsPanel;
         public Text MissionTitle,MissionInstruction,MissionCargo,MissionAccount;
         public RectTransform MissionProgress;
+        public GameObject ResearchPanel;
+        public Text ResearchName,ResearchStep,ResearchLog,ResearchAction;
+        public Image[] ResearchLegs;
         public ShipLighting Lighting;
         public RectTransform[] AxisIndicators=new RectTransform[3];
         public FlightInstrument[] Instruments;
@@ -41,8 +44,14 @@ namespace StarPilot
                 $"{(Mathf.Abs(elevation)<3?"ПО ВЫСОТЕ":elevation>0?"ВЫШЕ":"НИЖЕ")}  {Mathf.Abs(elevation):0}°";
             bool exploring=Expedition && Expedition.Active;
             OperationsPanel.SetActive(exploring);SystemsText.gameObject.SetActive(!exploring);
+            ResearchPanel.SetActive(exploring);
             if(exploring)
             {
+                var mission=Expedition.Mission;
+                ResearchName.text=mission.Name;
+                ResearchStep.text=mission.Step.Replace(" · ","\n");ResearchLog.text=mission.LatestEntry;
+                ResearchAction.text=mission.Stage==ResearchStage.Complete?"J / MISSION\nВЫЛЕТ У ПРИЧАЛА":mission.Carrying?"АРХИВ: 2 МЕСТА\nНАГРАДА 720 CR":"J / MISSION · К ЦЕЛИ\nНАГРАДА 720 CR";
+                for(int i=0;i<ResearchLegs.Length;i++)ResearchLegs[i].color=i<(int)mission.Stage?new Color(.3f,.8f,.7f):i==(int)mission.Stage?new Color(1,.57f,.24f):new Color(.06f,.18f,.21f);
                 var site=Expedition.Target;
                 float distance=site?Vector3.Distance(site.Position,Ship.transform.position):0;
                 RouteText.text=site?site.Title:"ПОИСК СИГНАЛА";
@@ -61,6 +70,7 @@ namespace StarPilot
                         $"{(Mathf.Abs(pitch)<3?"ПО ВЫСОТЕ":pitch>0?"ВЫШЕ":"НИЖЕ")} {Mathf.Abs(pitch):0}°";
                 }
                 MissionTitle.text=Expedition.IsScanning?$"СКАНИРОВАНИЕ {Expedition.Progress*100:0}%":Expedition.IsInteracting?$"ОПЕРАЦИЯ {Expedition.Progress*100:0}%":site?site.Kind==SiteKind.Station?"ДОСТАВКА И СЕРВИС":"ИССЛЕДОВАТЬ СИГНАЛ":"ИССЛЕДОВАТЕЛЬСКИЙ ВЫЛЕТ";
+                if(site && site.MissionObjective && !Expedition.IsScanning && !Expedition.IsInteracting)MissionTitle.text=mission.Step;
                 MissionInstruction.text=Expedition.Instruction;
                 MissionCargo.text=Expedition.CargoSummary;
                 MissionAccount.text=Expedition.AccountSummary+$"   КОРПУС {Ship.Hull:0}%";

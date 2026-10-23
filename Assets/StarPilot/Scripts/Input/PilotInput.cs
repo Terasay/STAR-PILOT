@@ -53,11 +53,17 @@ namespace StarPilot
                 if (kb.lKey.wasPressedThisFrame) Lighting.ToggleHeadlights();
                 if (kb.cKey.wasPressedThisFrame) Lighting.ToggleCabin();
                 if (kb.backspaceKey.wasPressedThisFrame) ResetRequested?.Invoke();
-                if (kb.vKey.wasPressedThisFrame && Expedition) Expedition.CycleTarget();
-                if (kb.bKey.wasPressedThisFrame && Expedition) Expedition.SelectHome();
+                if (kb.vKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.NextSignal);
+                if (kb.bKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.Home);
+                if (kb.jKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.Mission);
             }
             if (IsVr) ReadVr();
             else ReadDesktop(kb);
+        }
+
+        void PressNavigation(CockpitAction action)
+        {
+            foreach(var control in Expedition.Cockpit.Controls)if(control.Action==action){control.Press();return;}
         }
 
         void ReadDesktop(Keyboard kb)

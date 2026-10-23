@@ -6,7 +6,7 @@ namespace StarPilot
 {
     /// <summary>Survey, recovery and delivery use actual range, alignment, speed and cargo state.</summary>
     [DefaultExecutionOrder(80)]
-    public sealed class ExplorationController : MonoBehaviour
+    public sealed partial class ExplorationController : MonoBehaviour
     {
         public ShipFlightController Ship;
         public ExplorationWorld World;
@@ -25,7 +25,8 @@ namespace StarPilot
         public float Progress {get;private set;}
         public string Instruction {get;private set;}="ПОИСК СИГНАЛОВ";
         public string Notice {get;private set;}="";
-        public string CargoSummary=>$"ГРУЗ {Save.Cargo}/{Capacity}   ДАННЫЕ {Save.Data}";
+        public int UsedCargo=>Save.Cargo+(Mission!=null && Mission.Carrying?ResearchMission.CargoUnits:0);
+        public string CargoSummary=>$"ГРУЗ {UsedCargo}/{Capacity}   ДАННЫЕ {Save.Data}";
         public string AccountSummary=>$"{Save.Credits} CR   СКАНЕР MK {Grade+1}";
         public event Action<bool> Feedback;
         readonly HashSet<string> scanned=new HashSet<string>(),collected=new HashSet<string>();
@@ -38,11 +39,12 @@ namespace StarPilot
             catch(Exception error){Save=new ExpeditionSave();SavingAvailable=false;Debug.LogWarning("[STAR PILOT] Save preserved: "+error.Message);}
             foreach(string id in Save.Scanned)scanned.Add(id);foreach(string id in Save.Collected)collected.Add(id);
             World.Seed=Save.Seed;World.Expedition=this;World.SetExploration(true);
+            if(Save.Mission==null){Save.Mission=ResearchMission.Create(World.LayoutSource,Save.Seed,new SectorAddress(),1);Commit();}
             foreach(var control in Cockpit.Controls)control.Expedition=this;
         }
         public void SetActiveMode(bool active)
         {
-            Active=active;ScanRequested=InteractRequested=false;Target=null;ResetWork();World.SetExploration(active);
+            Active=active;FollowingMission=active;ScanRequested=InteractRequested=false;Target=null;ResetWork();World.SetExploration(active);
         }
         public void RestoreSite(ExplorationSite site)
         {
@@ -53,7 +55,7 @@ namespace StarPilot
             if(!Active || !Ship.ControlsEnabled){IsScanning=IsInteracting=false;return;}
             if(Time.time>noticeUntil)Notice="";
             if(World.LoadedSectorCount==0){Instruction="ПОИСК БЛИЖНИХ СИГНАЛОВ";return;}
-            if(!Target || !Target.gameObject.activeInHierarchy)CycleTarget();
+            if(!Target || !Target.gameObject.activeInHierarchy){if(FollowingMission)SelectMissionTarget();else CycleTarget();}
             if(!Target){Instruction="ПОИСК БЛИЖНИХ СИГНАЛОВ";return;}
             bool scan=ScanRequested,use=InteractRequested;
             foreach(var control in Cockpit.Controls)
@@ -63,8 +65,10 @@ namespace StarPilot
             }
             IsScanning=IsInteracting=false;
             if(!Ship.EngineOn || Ship.Hull<=0){Instruction="ВКЛЮЧИТЕ ДВИГАТЕЛЬ\nДЛЯ РАБОТЫ ОБОРУДОВАНИЯ";Decay();return;}
+            if(Target.IsRemote){Instruction="СИГНАЛ В ДРУГОМ СЕКТОРЕ\nСЛЕДУЙТЕ КУРСУ НА ПРИБОРЕ";Decay();return;}
             float distance=Vector3.Distance(Ship.transform.position,Target.Position);
             float angle=Vector3.Angle(Ship.transform.forward,Target.Position-Ship.transform.position);
+            if(Target.MissionObjective){UpdateMission(scan,use,distance,angle);return;}
             if(Target.Kind==SiteKind.Station)
             {
                 bool near=distance<26,slow=Ship.Speed<3,aligned=Vector3.Angle(Ship.transform.forward,Target.transform.forward)<22;
@@ -82,7 +86,7 @@ namespace StarPilot
                 else Decay();return;
             }
             int units=Target.Kind==SiteKind.Mineral?2:1;
-            bool capacity=Save.Cargo+units<=Capacity,close=distance<32,stable=Ship.Speed<5,aim=angle<25;
+            bool capacity=UsedCargo+units<=Capacity,close=distance<32,stable=Ship.Speed<5,aim=angle<25;
             Instruction=!capacity?"ГРУЗОВОЙ ОТСЕК ЗАПОЛНЕН\nB / BASE · НА СТАНЦИЮ":!close?"ПОДЛЕТИТЕ БЛИЖЕ 32 М\nДЛЯ ПОДБОРА НАХОДКИ":!stable?"СНИЗЬТЕ СКОРОСТЬ\nДО 5 М/С":!aim?"НАПРАВЬТЕ НОС КОРАБЛЯ\nНА НАЙДЕННЫЙ ОБЪЕКТ":Target.Kind==SiteKind.Wreck?"X / SERVICE · УДЕРЖИВАТЬ\nПОДОБРАТЬ ЧЁРНЫЙ ЯЩИК":"X / SERVICE · УДЕРЖИВАТЬ\nИЗВЛЕЧЬ ОБРАЗЦЫ";
             bool clear=close && aim && LineOfSight(Target);
             if(capacity && close && stable && aim && !clear)Instruction="ОБЪЕКТ ЗАКРЫТ ПРЕГРАДОЙ\nСМЕНИТЕ ПОЗИЦИЮ";
@@ -117,10 +121,12 @@ namespace StarPilot
         }
         void Deliver()
         {
-            int reward=Save.CargoValue+Save.Data*120,previousGrade=Grade;
+            bool missionDelivery=Mission!=null && Mission.Carrying;
+            int reward=Save.CargoValue+Save.Data*120+(missionDelivery?ResearchMission.Reward:0),previousGrade=Grade;
+            if(missionDelivery){Mission.Stage=ResearchStage.Complete;Mission.Log("Архив принят. Маршрут зонда восстановлен. Награда: 720 CR.");}
             if(reward>0){Save.Credits+=reward;Save.Delivered++;}
             Save.Cargo=Save.CargoValue=Save.Data=0;Ship.Repair();Commit();ResetWork();
-            Announce(reward>0?$"ДОСТАВКА +{reward} CR"+(Grade>previousGrade?" · СКАНЕР УЛУЧШЕН":"") :"КОРАБЛЬ ОБСЛУЖЕН · КОРПУС 100%");
+            Announce(missionDelivery?$"ЭКСПЕДИЦИЯ ЗАВЕРШЕНА · +{reward} CR":reward>0?$"ДОСТАВКА +{reward} CR"+(Grade>previousGrade?" · СКАНЕР УЛУЧШЕН":"") :"КОРАБЛЬ ОБСЛУЖЕН · КОРПУС 100%");
             CycleTarget();
         }
         void Announce(string message){Notice=message;noticeUntil=Time.time+7;Feedback?.Invoke(true);}
@@ -129,6 +135,7 @@ namespace StarPilot
         public void CycleTarget()
         {
             if(!Active)return;
+            FollowingMission=false;
             var candidates=new List<ExplorationSite>();
             foreach(var site in World.Sites)if(site && site.gameObject.activeInHierarchy && site.Kind!=SiteKind.Station && !site.Exhausted)candidates.Add(site);
             candidates.Sort((a,b)=>(a.Position-Ship.transform.position).sqrMagnitude.CompareTo((b.Position-Ship.transform.position).sqrMagnitude));
@@ -145,11 +152,12 @@ namespace StarPilot
             }
             return best;
         }
-        public void SelectHome(){if(!Active)return;Target=NearestStation();ResetWork();}
-        public void SelectTarget(ExplorationSite site){if(!Active || !site)return;Target=site;ResetWork();}
+        public void SelectHome(){if(!Active)return;FollowingMission=false;Target=NearestStation();ResetWork();}
+        public void SelectTarget(ExplorationSite site){if(!Active || !site)return;FollowingMission=site.MissionObjective;Target=site;ResetWork();}
         public void AbortSortie()
         {
-            Save.Cargo=Save.Data=Save.CargoValue=0;Target=null;Notice="";ResetWork();Commit();
+            if(Mission!=null && Mission.Carrying){Mission.Stage=ResearchStage.Archive;Mission.Log("Вылет отменён. Повторите извлечение архива у зонда.");}
+            Save.Cargo=Save.Data=Save.CargoValue=0;FollowingMission=true;Target=null;Notice="";ResetWork();Commit();
         }
         void Commit()
         {

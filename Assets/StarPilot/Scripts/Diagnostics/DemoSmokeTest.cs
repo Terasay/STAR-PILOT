@@ -205,6 +205,7 @@ namespace StarPilot
             CheckResult("Headlights illuminate geometry",lit>unlit+.025f,$"asteroid centre brightness: off {unlit:F3}; on {lit:F3}");
             Demo.PilotCamera.transform.localRotation=Quaternion.identity;
             yield return ExplorationChecks();
+            yield return ResearchChecks();
             yield return new WaitForSecondsRealtime(.5f);
             CheckResult("No runtime errors",report.errors.Count==0,$"errors {report.errors.Count}");
             File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
@@ -325,6 +326,95 @@ namespace StarPilot
         ExplorationSite FindSite(string id)
         {
             foreach(var site in Demo.World.Sites)if(site && site.Id==id)return site;return null;
+        }
+        IEnumerator ResearchChecks()
+        {
+            var expedition=Demo.Expedition;var ship=Demo.Ship;var world=Demo.World;
+            CheckResult("First mission starts ahead in the launch sector",expedition.Mission.Relay.Sector.Equals(new SectorAddress()) && expedition.Mission.Relay.Position.z>0,
+                "Initial mission anchor is stable at the origin, independent of sub-millimeter physics offsets on a sector boundary");
+            string legacyPath=Path.Combine(output,"legacy-save-fixture.json");
+            File.WriteAllText(legacyPath,"{\"Version\":1,\"GeneratorVersion\":1,\"Seed\":1729,\"Credits\":350,\"Delivered\":2,\"Data\":1,\"Cargo\":1,\"CargoValue\":180,\"Scanned\":[\"old-site\"],\"Collected\":[\"old-site\"]}");
+            var legacy=ExpeditionSave.Load(legacyPath);
+            CheckResult("Version 0.5 save migration",legacy.Version==2 && legacy.Credits==350 && legacy.Cargo==1 && legacy.Data==1 && legacy.Collected.Contains("old-site") && legacy.Mission==null,
+                "Previous credits, payload and discoveries survive migration; a mission can be added independently");
+            var invalid=new ExpeditionSave {Mission=new ResearchMission {Stage=(ResearchStage)999}};
+            string invalidPath=Path.Combine(output,"invalid-mission-fixture.json"),invalidJson=JsonUtility.ToJson(invalid);
+            File.WriteAllText(invalidPath,invalidJson);bool rejected=false;
+            try {ExpeditionSave.Load(invalidPath);}catch(InvalidDataException){rejected=true;}
+            CheckResult("Invalid mission save is preserved",rejected && File.ReadAllText(invalidPath)==invalidJson,"Invalid mission state is rejected without overwriting the file");
+            bool clear=true;
+            for(int i=0;i<24;i++)
+            {
+                var candidate=ResearchMission.Create(world.LayoutSource,world.Seed,new SectorAddress(i-12,0,i%5-2),i+1);
+                foreach(var location in new[]{candidate.Relay,candidate.Echo,candidate.Archive})
+                {
+                    var layout=world.LayoutSource.Generate(world.Seed,location.Sector);
+                    foreach(var site in layout.Sites)clear&=Vector3.Distance(site.Position,location.Position)>=170;
+                    for(int rock=0;rock<layout.Rocks.Length;rock++)clear&=Vector3.Distance(layout.Rocks[rock],location.Position)>=145+layout.RockSizes[rock]*.6f;
+                }
+            }
+            CheckResult("Research objectives have approach clearance",clear,"72 mission locations across positive and negative sectors avoid generated sites and rocks");
+            var missionButton=Demo.Cockpit.Controls.Find(c=>c.Action==CockpitAction.Mission);missionButton.Press();
+            yield return null;
+            CheckResult("Physical mission key selects expedition",expedition.FollowingMission && expedition.Target==world.MissionSite && expedition.Target.Kind==SiteKind.Relay,"MISSION selects a saved objective, independent of NEXT and BASE");
+            expedition.SelectHome();var missionKeyboard=InputSystem.AddDevice<Keyboard>("StarPilotMissionKeyboard");injectedKeyboard=missionKeyboard;Demo.Input.enabled=true;
+            InputSystem.QueueStateEvent(missionKeyboard,new KeyboardState(Key.J));yield return null;yield return null;
+            CheckResult("Keyboard mission command animates its button",expedition.FollowingMission && expedition.Target==world.MissionSite && missionButton.Active,
+                "J selects the mission and drives the same physical button feedback");
+            InputSystem.QueueStateEvent(missionKeyboard,new KeyboardState());yield return null;yield return null;
+            InputSystem.RemoveDevice(missionKeyboard);Demo.Input.enabled=false;
+            PlaceShip(expedition.Target.Position-Vector3.forward*100,Quaternion.identity);expedition.ScanRequested=true;
+            int startingCredits=expedition.Save.Credits;
+            yield return new WaitForSeconds(1.2f);CaptureFrame("16-research-relay.png");
+            float pausedProgress=expedition.Progress;Demo.Hud.SetMenu(true);yield return new WaitForSecondsRealtime(.35f);
+            CheckResult("Research scan pauses with flight",Mathf.Abs(expedition.Progress-pausedProgress)<.01f && expedition.Mission.Stage==ResearchStage.Relay,"Opening the menu freezes mission work");
+            Demo.Hud.SetMenu(false);yield return new WaitForSeconds(3.2f);expedition.ScanRequested=false;
+            CheckResult("Relay reveals the next lead",expedition.Mission.Stage==ResearchStage.Echo && expedition.Target.Kind==SiteKind.Anomaly && expedition.Mission.Journal.Count>=2 && expedition.Save.Credits==startingCredits,"Relay memory reveals an anomaly; no credits awarded for the lead");
+            PlaceShip(expedition.Target.Position-Vector3.forward*95,Quaternion.identity);expedition.ScanRequested=true;
+            yield return new WaitForSeconds(4.3f);
+            var checkpoint=ExpeditionSave.Load(expedition.SavePath);
+            CheckResult("First parallax sample persists",expedition.Mission.EchoSamples==1 && checkpoint.Mission.EchoSamples==1 && Vector3.Distance(checkpoint.Mission.FirstBearing,Vector3.back)<.05f,"The first observation direction is saved in stable world axes");
+            yield return new WaitForSeconds(.6f);
+            CheckResult("Second sample requires a new position",expedition.Mission.Stage==ResearchStage.Echo && expedition.Progress==0 && expedition.Instruction.Contains("РАКУРС"),"Holding SCAN at the first location cannot complete both observations");
+            expedition.ScanRequested=false;
+            PlaceShip(new Vector3(3600,210,-2600),Quaternion.identity);world.RebaseIfNeeded();yield return new WaitForSeconds(.8f);
+            CheckResult("Distant mission remains navigable",world.MissionSite && world.MissionSite.IsRemote && expedition.Target==world.MissionSite &&
+                world.MissionSite.GetComponentsInChildren<Renderer>().Length==0,"Only the coordinate proxy remains while the objective model is outside resident sectors");
+            expedition.Save.Mission=checkpoint.Mission;world.RefreshMission();
+            Vector3 echoPosition=world.MissionSite.Position;
+            PlaceShip(echoPosition+Vector3.right*95,Quaternion.LookRotation(Vector3.left));yield return new WaitForSeconds(.8f);
+            expedition.ScanRequested=true;yield return new WaitForSeconds(1.2f);CaptureFrame("17-parallax-scan.png");
+            CheckResult("Parallax survives origin shift and reload",expedition.IsScanning && expedition.ParallaxAngle>85,"A 90 degree observation remains valid after sector unload, origin shift and saved-state restoration");
+            yield return new WaitForSeconds(3.2f);expedition.ScanRequested=false;
+            CheckResult("Two bearings reveal the research probe",expedition.Mission.Stage==ResearchStage.Archive && expedition.Target.Kind==SiteKind.Archive,"Second observation reveals a new probe destination");
+            PlaceShip(expedition.Target.Position-Vector3.forward*85,Quaternion.identity);expedition.ScanRequested=true;
+            yield return new WaitForSeconds(4.3f);expedition.ScanRequested=false;
+            CheckResult("Probe scan unlocks its archive",expedition.Mission.ArchiveScanned && expedition.Target.CargoVisual.gameObject.activeInHierarchy,"Sealed archive becomes visible after scanning the probe");
+            PlaceShip(expedition.Target.Position-Vector3.forward*25,Quaternion.identity);expedition.Save.Cargo=expedition.Capacity-1;
+            expedition.InteractRequested=true;yield return new WaitForSeconds(.35f);
+            CheckResult("Research archive needs two cargo slots",expedition.Mission.Stage==ResearchStage.Archive && expedition.Progress==0,"Archive cannot be recovered when only one slot is free");
+            expedition.Save.Cargo=0;yield return new WaitForSeconds(1);CaptureFrame("18-archive-recovery.png");
+            yield return new WaitForSeconds(1.8f);expedition.InteractRequested=false;
+            int credits=expedition.Save.Credits;
+            CheckResult("Archive recovery reserves cargo",expedition.Mission.Carrying && expedition.UsedCargo==2 && expedition.Save.Cargo==0 && expedition.Target.Kind==SiteKind.Station,"Mission payload is distinct from ordinary cargo and awaiting delivery");
+            Demo.ResetFlight();ship.ToggleEngine();yield return new WaitForSeconds(.8f);missionButton.Press();
+            CheckResult("Aborted mission cargo can be recovered again",expedition.Mission.Stage==ResearchStage.Archive && expedition.Mission.ArchiveScanned && expedition.UsedCargo==0 && expedition.Save.Credits==credits,"Aborting drops mission cargo without locking the expedition or granting a reward");
+            PlaceShip(expedition.Target.Position-Vector3.forward*25,Quaternion.identity);yield return new WaitForSeconds(.6f);
+            expedition.InteractRequested=true;yield return new WaitForSeconds(2.8f);expedition.InteractRequested=false;
+            var station=expedition.Target;PlaceShip(station.Position-station.transform.forward*10,station.transform.rotation);
+            expedition.InteractRequested=true;yield return new WaitForSeconds(2.3f);expedition.InteractRequested=false;
+            CheckResult("Research archive delivery completes expedition",expedition.Mission.Stage==ResearchStage.Complete && expedition.UsedCargo==0 && expedition.Save.Credits==credits+ResearchMission.Reward,
+                "720 CR paid only after delivery; mission cargo cleared");
+            Demo.PilotCamera.transform.localRotation=Quaternion.Euler(15,23,0);yield return new WaitForSeconds(.2f);CaptureFrame("19-expedition-journal.png");Demo.PilotCamera.transform.localRotation=Quaternion.identity;
+            expedition.SelectTarget(station);expedition.InteractRequested=true;yield return new WaitForSeconds(2.3f);expedition.InteractRequested=false;
+            CheckResult("Completed mission cannot pay twice",expedition.Save.Credits==credits+ResearchMission.Reward,"Repeated service cannot pay for the same archive again");
+            PlaceShip(station.Position-station.transform.forward*80,station.transform.rotation);missionButton.Press();
+            CheckResult("Next expedition requires station service range",expedition.Mission.Number==1 && expedition.Mission.Stage==ResearchStage.Complete,"New expedition cannot start while away from the station");
+            PlaceShip(station.Position-station.transform.forward*10,station.transform.rotation);missionButton.Press();yield return null;
+            CheckResult("Station issues a new expedition",expedition.Mission.Number==2 && expedition.Mission.Stage==ResearchStage.Relay && expedition.Target.Kind==SiteKind.Relay && expedition.Save.Credits==credits+ResearchMission.Reward,
+                "MISSION at the station starts the next chain with fresh objective IDs and preserved earnings");
+            CheckResult("Journal stays bounded and physical",expedition.Mission.Journal.Count<=6 && ship.GetComponent<CockpitDisplays>().ResearchPanel.GetComponentInParent<Canvas>().renderMode==RenderMode.WorldSpace && Demo.Hud.FlightOverlayHidden,
+                "Expedition status is on the cockpit instrument; flight overlay stays empty");
         }
         void PlaceShip(Vector3 position,Quaternion rotation)
         {

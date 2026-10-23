@@ -74,7 +74,7 @@ namespace StarPilot
 
             for(int side=-1;side<=1;side+=2)
             {
-                var auxiliary=Monitor(cockpit,side<0?"ATTITUDE / IMU":"FLIGHT CONTROL",new Vector3(side*1.13f,1.04f,.87f),new Vector2(280,430),new Vector3(20,side*28,0));
+                var auxiliary=Monitor(cockpit,side<0?"ATTITUDE / IMU":"AUXILIARY / LOG",new Vector3(side*1.13f,side<0?1.04f:1.18f,.87f),new Vector2(280,430),new Vector3(20,side*28,0));
                 if(side<0)
                 {
                     instruments.Add(FlightInstrument.Create(auxiliary.transform,FlightInstrument.Instrument.Attitude,new Vector2(0,30),displays.Ship));
@@ -89,6 +89,14 @@ namespace StarPilot
                         displays.AxisIndicators[i]=CockpitDisplays.Rect(auxiliary.transform,"Channel position",new Vector2(0,90-i*78),new Vector2(7,18),Cyan).rectTransform;
                     }
                     Label(auxiliary.transform,"RCS ready","6 DOF  /  MANUAL",14,new Vector2(0,-162),new Vector2(240,25));
+                    var journal=CockpitDisplays.Rect(auxiliary.transform,"Expedition log",new Vector2(0,-4),new Vector2(268,382),new Color(.003f,.013f,.019f));
+                    displays.ResearchPanel=journal.gameObject;
+                    displays.ResearchName=CockpitDisplays.Text(journal.transform,"Mission name","",24,Cyan,new Vector2(0,145),new Vector2(250,56),TextAnchor.MiddleCenter);
+                    displays.ResearchStep=CockpitDisplays.Text(journal.transform,"Mission step","",22,Amber,new Vector2(0,91),new Vector2(250,56),TextAnchor.MiddleCenter);
+                    displays.ResearchLegs=new Image[4];
+                    for(int i=0;i<4;i++)displays.ResearchLegs[i]=CockpitDisplays.Rect(journal.transform,"Leg "+i,new Vector2(-90+i*60,51),new Vector2(50,5),Cyan);
+                    displays.ResearchLog=CockpitDisplays.Text(journal.transform,"Last discovery","",23,Ink,new Vector2(0,-43),new Vector2(242,165),TextAnchor.UpperLeft);
+                    displays.ResearchAction=CockpitDisplays.Text(journal.transform,"Mission action","",21,Cyan,new Vector2(0,-156),new Vector2(250,56),TextAnchor.MiddleCenter);
                 }
             }
             displays.Instruments=instruments.ToArray();
@@ -299,12 +307,12 @@ namespace StarPilot
         {
             var bank=new GameObject("Survey equipment console").transform;bank.SetParent(parent,false);
             bank.localPosition=new Vector3(0,.76f,.65f);bank.localRotation=Quaternion.Euler(62,0,0);
-            g.Panel("Survey console surround",bank,Vector3.zero,new Vector3(.68f,.19f,.055f),hull);
-            var captions=new[]{"SCAN [G]","SERVICE [X]","NEXT [V]","BASE [B]"};
-            for(int i=0;i<4;i++)
+            g.Panel("Survey console surround",bank,Vector3.zero,new Vector3(.84f,.19f,.055f),hull);
+            var captions=new[]{"SCAN [G]","SERVICE [X]","NEXT [V]","BASE [B]","MISSION [J]"};
+            for(int i=0;i<5;i++)
             {
                 var control=new GameObject(captions[i],typeof(BoxCollider),typeof(CockpitControl)).GetComponent<CockpitControl>();
-                control.transform.SetParent(bank,false);control.transform.localPosition=new Vector3(-.24f+i*.16f,.015f,-.034f);
+                control.transform.SetParent(bank,false);control.transform.localPosition=new Vector3(-.32f+i*.16f,.015f,-.034f);
                 control.Action=(CockpitAction)((int)CockpitAction.Scan+i);control.Ship=displays.Ship;control.Lit=i==1?amber:cyan;control.Unlit=dark;
                 var collider=control.GetComponent<BoxCollider>();collider.size=new Vector3(.13f,.13f,.09f);collider.isTrigger=true;
                 g.Panel("Equipment key socket",control.transform,Vector3.zero,new Vector3(.123f,.085f,.02f),dark);

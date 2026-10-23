@@ -8,8 +8,9 @@ namespace StarPilot
     [Serializable]
     public sealed class ExpeditionSave
     {
-        public int Version=1,GeneratorVersion=SectorLayout.Version,Seed=1729;
+        public int Version=2,GeneratorVersion=SectorLayout.Version,Seed=1729;
         public int Credits,Delivered,Data,Cargo,CargoValue;
+        public ResearchMission Mission;
         public List<string> Scanned=new List<string>(),Collected=new List<string>();
 
         public static string DefaultPath()
@@ -23,9 +24,12 @@ namespace StarPilot
         {
             if(!File.Exists(path))return new ExpeditionSave();
             var save=JsonUtility.FromJson<ExpeditionSave>(File.ReadAllText(path));
-            if(save==null || save.Version!=1 || save.GeneratorVersion!=SectorLayout.Version || save.Scanned==null || save.Collected==null ||
+            if(save==null || (save.Version!=1 && save.Version!=2) || save.GeneratorVersion!=SectorLayout.Version || save.Scanned==null || save.Collected==null ||
                 save.Credits<0 || save.Cargo<0 || save.Cargo>10 || save.CargoValue<0 || save.Data<0 || save.Delivered<0)
                 throw new InvalidDataException("Unsupported or damaged expedition save; original file preserved.");
+            if(save.Version==1){save.Version=2;save.Mission=null;}
+            if(save.Mission!=null && (!save.Mission.IsValid() || save.Cargo+(save.Mission.Carrying?ResearchMission.CargoUnits:0)>10))
+                throw new InvalidDataException("Damaged research mission; original file preserved.");
             return save;
         }
         public void Write(string path)

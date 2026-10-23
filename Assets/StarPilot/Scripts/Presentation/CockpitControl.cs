@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace StarPilot
 {
-    public enum CockpitAction { Engine, Assist, Brake, Boost, Headlights, CabinLight, Scan, Recover, NextSignal, Home }
+    public enum CockpitAction { Engine, Assist, Brake, Boost, Headlights, CabinLight, Scan, Recover, NextSignal, Home, Mission }
 
     /// <summary>A physical switch and its lamp always display simulation state, regardless of input device.</summary>
     public sealed class CockpitControl : MonoBehaviour
@@ -31,6 +31,7 @@ namespace StarPilot
             else if(Action==CockpitAction.CabinLight)Lighting.ToggleCabin();
             else if(Action==CockpitAction.NextSignal){Expedition?.CycleTarget();pressedUntil=Time.time+.25f;}
             else if(Action==CockpitAction.Home){Expedition?.SelectHome();pressedUntil=Time.time+.25f;}
+            else if(Action==CockpitAction.Mission){Expedition?.FocusMission();pressedUntil=Time.time+.25f;}
             else Held=true;
         }
         public void Release(){Held=false;}

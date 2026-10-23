@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace StarPilot
 {
-    public enum SiteKind { Wreck, Anomaly, Mineral, Station }
+    public enum SiteKind { Wreck, Anomaly, Mineral, Station, Relay, Archive }
 
     [Serializable]
     public struct SectorAddress : IEquatable<SectorAddress>
