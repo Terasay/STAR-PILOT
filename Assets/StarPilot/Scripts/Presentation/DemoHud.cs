@@ -35,10 +35,10 @@ namespace StarPilot
             }
             menu=Panel(canvas.transform,"Flight menu",new Vector2(500,-15),new Vector2(660,815),new Color(.009f,.021f,.031f,.96f));
             CockpitDisplays.Rect(menu.transform,"Accent",new Vector2(-327,0),new Vector2(3,815),Cyan);
-            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 6",15,Cyan,new Vector2(0,355),new Vector2(555,35));
+            Label(menu.transform,"Eyebrow","S T A R   P I L O T    /    0 7",15,Cyan,new Vector2(0,355),new Vector2(555,35));
             menuTitle=Label(menu.transform,"Title","Эхо Кеплера",38,Color.white,new Vector2(0,295),new Vector2(555,70));
             Label(menu.transform,"Intro","Маяк передаёт код пропавшего зонда.\nПроследите сигнал через аномалию, найдите\nархив и доставьте его на станцию.",21,Ink,new Vector2(0,200),new Vector2(555,110));
-            Label(menu.transform,"Controls summary","W / S  тяга   ·   Мышь  поворот   ·   Пробел  тормоз\nG  сканировать   ·   X  подобрать / сдать груз\nJ  цель экспедиции   ·   V  другие сигналы\nB  станция   ·   Alt + мышь  обзор   ·   H  справка",19,Ink,new Vector2(0,80),new Vector2(555,110));
+            Label(menu.transform,"Controls summary","W / S  тяга   ·   Мышь  поворот   ·   Пробел  тормоз\nG  сканировать   ·   X  подобрать / сдать груз\nJ  цель экспедиции   ·   V  другие сигналы\nZ  помощь сближению   ·   N  масштаб радара",19,Ink,new Vector2(0,80),new Vector2(555,110));
             Button(menu.transform,"ИССЛЕДОВАТЬ / ПРОДОЛЖИТЬ",new Vector2(0,-25),()=>StartMode(false),true);
             Button(menu.transform,"ЗАПУСТИТЬ В VR",new Vector2(0,-97),()=>Demo.RequestVr(),false);
             Button(menu.transform,"ТРЕНИРОВКА ПО МАЯКАМ",new Vector2(0,-169),()=>StartMode(true),false);
@@ -59,8 +59,8 @@ namespace StarPilot
             help=Panel(canvas.transform,"Controls",new Vector2(-450,0),new Vector2(760,865),new Color(.009f,.021f,.031f,.96f));
             Label(help.transform,"Title","УПРАВЛЕНИЕ",26,Cyan,new Vector2(0,375),new Vector2(650,50));
             Label(help.transform,"Bindings","W / S                 Тяга вперёд / назад\nA / D                 Боковые двигатели\nR / F                  Вверх / вниз\nМышь / стрелки    Тангаж и рыскание\nQ / E                 Крен\nЛевый Alt + мышь  Осмотреть кабину\nTab + ЛКМ           Кнопки на панели\nПробел               Активное торможение\nЛевый Shift          Ускорение\nT                       Стабилизация вкл. / выкл.\nI                        Двигатель вкл. / выкл.\nL / C                  Фары / яркость кабины\nBackspace            Вернуться к старту\nH / Escape           Помощь / меню",19,Ink,new Vector2(0,35),new Vector2(650,500));
-            Label(help.transform,"Survey bindings","G / SCAN           Удерживать: сканировать сигнал\nX / SERVICE        Удерживать: подбор / сдача груза\nV / NEXT             Следующий сигнал\nB / BASE             Курс на ближайшую станцию\nJ / MISSION          Цель экспедиции / новый вылет у станции",18,Cyan,new Vector2(0,-267),new Vector2(650,135));
-            Label(help.transform,"Physics note","Сканирование: до 160 м, скорость до 12 м/с.\nПодбор: до 32 м, скорость до 5 м/с.\nСброс / смена режима: несданный груз теряется.",17,Ink,new Vector2(0,-375),new Vector2(650,85));
+            Label(help.transform,"Survey bindings","G / SCAN           Удерживать: сканировать сигнал\nX / SERVICE        Удерживать: подбор / сдача груза\nV / NEXT             Следующий сигнал\nB / BASE             Курс на ближайшую станцию\nJ / MISSION          Цель экспедиции / новый вылет у станции\nZ / APPROACH      Помощь при сближении вкл. / выкл.\nN / RADAR           Масштаб радара: 0,5 / 1,5 / 3 км",18,Cyan,new Vector2(0,-272),new Vector2(650,170));
+            Label(help.transform,"Physics note","APPROACH тормозит подлёт; поворот остаётся ручным.\nПрепятствия обходите сами. SPACE — полный тормоз.\nСброс / смена режима: несданный груз теряется.",17,Ink,new Vector2(0,-375),new Vector2(650,85));
             help.SetActive(false);
             Input.MenuRequested=()=>SetMenu(!Input.InMenu);
             Input.HelpRequested=()=> { if(!Input.IsVr)help.SetActive(!help.activeSelf); };

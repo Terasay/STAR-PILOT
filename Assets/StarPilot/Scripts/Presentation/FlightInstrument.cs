@@ -42,10 +42,31 @@ namespace StarPilot
                 {
                     if(!site || !site.gameObject.activeInHierarchy || site.Exhausted)continue;
                     Vector3 p=Ship.transform.InverseTransformPoint(site.Position);
-                    Vector2 mark=center+Vector2.ClampMagnitude(new Vector2(p.x,p.z)*.18f,100);
                     bool selected=site==Expedition.Target;
-                    if(selected)Line(v,center,mark,2,new Color(.4f,.25f,.1f));
-                    Arc(v,mark,selected?9:3,0,360,selected?3:1,selected?Amber:site.Kind==SiteKind.Station?Cyan:Dim);
+                    bool outside=p.magnitude>Expedition.RadarRange || site.IsRemote;
+                    if(outside && !selected)continue;
+                    Vector2 planar=new Vector2(p.x,p.z);
+                    Vector2 offset=outside?(planar.sqrMagnitude>.01f?planar.normalized:Vector2.up)*102:planar*(100/Expedition.RadarRange);
+                    Vector2 mark=center+offset;
+                    Color ink=selected?Amber:site.Kind==SiteKind.Station?Cyan:site.Kind==SiteKind.Anomaly?new Color(.68f,.48f,.95f):Pale;
+                    if(selected)
+                    {
+                        Line(v,center,mark,1.5f,new Color(.4f,.25f,.1f));
+                        Arc(v,mark,10,0,360,2,Amber);
+                        if(outside)
+                        {
+                            Vector2 outward=offset.normalized,normal=new Vector2(-outward.y,outward.x);
+                            Line(v,mark-outward*5-normal*5,mark+outward*5,2,Amber);Line(v,mark+outward*5,mark-outward*5+normal*5,2,Amber);
+                            continue;
+                        }
+                    }
+                    Contact(v,mark,site.Kind,ink);
+                    if(Mathf.Abs(p.y)>30)
+                    {
+                        float sign=Mathf.Sign(p.y);
+                        Line(v,mark+new Vector2(-3,sign*8),mark+new Vector2(0,sign*11),1.5f,ink);
+                        Line(v,mark+new Vector2(0,sign*11),mark+new Vector2(3,sign*8),1.5f,ink);
+                    }
                 }
             }
             else for(int i=Route.Current;i<Route.Gates.Length;i++)
@@ -59,6 +80,19 @@ namespace StarPilot
             Line(v,center+new Vector2(-10,-8),center+new Vector2(0,-3),2,Pale);Line(v,center+new Vector2(10,-8),center+new Vector2(0,-3),2,Pale);
             // A rotating scan is deliberately slow; stars and the outside world have no twinkle animation.
             float sweep=Time.time*18f;Line(v,center,center+Polar(108,sweep),1,new Color(.12f,.65f,.65f,.35f));
+        }
+        static void Contact(VertexHelper v,Vector2 p,SiteKind kind,Color ink)
+        {
+            if(kind==SiteKind.Anomaly){Arc(v,p,4,0,360,2,ink);return;}
+            if(kind==SiteKind.Mineral)
+            {Line(v,p+new Vector2(-4,-4),p+new Vector2(4,4),2,ink);Line(v,p+new Vector2(-4,4),p+new Vector2(4,-4),2,ink);return;}
+            if(kind==SiteKind.Relay)
+            {Line(v,p+new Vector2(0,-5),p+new Vector2(0,5),2,ink);Line(v,p+new Vector2(-4,2),p+new Vector2(4,2),2,ink);return;}
+            bool diamond=kind==SiteKind.Wreck;
+            Vector2 a=diamond?new Vector2(0,5):new Vector2(-4,4),b=diamond?new Vector2(5,0):new Vector2(4,4),
+                c=diamond?new Vector2(0,-5):new Vector2(4,-4),d=diamond?new Vector2(-5,0):new Vector2(-4,-4);
+            Line(v,p+a,p+b,2,ink);Line(v,p+b,p+c,2,ink);Line(v,p+c,p+d,2,ink);Line(v,p+d,p+a,2,ink);
+            if(kind==SiteKind.Archive)Line(v,p+new Vector2(-2,0),p+new Vector2(2,0),2,ink);
         }
         void Velocity(VertexHelper v)
         {

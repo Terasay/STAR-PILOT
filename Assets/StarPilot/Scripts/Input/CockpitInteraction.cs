@@ -79,6 +79,7 @@ namespace StarPilot
                 CockpitAction.Brake=>"УДЕРЖИВАЙ ЛКМ · ТОРМОЗ", CockpitAction.Boost=>"УДЕРЖИВАЙ ЛКМ · УСКОРЕНИЕ",
                 CockpitAction.Headlights=>"ЛКМ · ВНЕШНИЕ ФАРЫ",CockpitAction.CabinLight=>"ЛКМ · СВЕТ КАБИНЫ",
                 CockpitAction.Scan=>"УДЕРЖИВАЙ ЛКМ · СКАНЕР",CockpitAction.Recover=>"УДЕРЖИВАЙ ЛКМ · ОБСЛУЖИТЬ",
+                CockpitAction.Approach=>"ЛКМ · ПОМОЩЬ СБЛИЖЕНИЮ",CockpitAction.RadarRange=>"ЛКМ · ДАЛЬНОСТЬ РАДАРА",
                 CockpitAction.NextSignal=>"ЛКМ · СЛЕДУЮЩИЙ СИГНАЛ",CockpitAction.Mission=>"ЛКМ · ЦЕЛЬ ЭКСПЕДИЦИИ",_=>"ЛКМ · К СТАНЦИИ" };
             else Hint="TAB · ПАНЕЛЬ УПРАВЛЕНИЯ";
             if(Mouse.current.leftButton.wasPressedThisFrame && hovered){mouseControl=hovered;hovered.Press();}

@@ -56,6 +56,8 @@ namespace StarPilot
                 if (kb.vKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.NextSignal);
                 if (kb.bKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.Home);
                 if (kb.jKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.Mission);
+                if (kb.zKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.Approach);
+                if (kb.nKey.wasPressedThisFrame && Expedition) PressNavigation(CockpitAction.RadarRange);
             }
             if (IsVr) ReadVr();
             else ReadDesktop(kb);

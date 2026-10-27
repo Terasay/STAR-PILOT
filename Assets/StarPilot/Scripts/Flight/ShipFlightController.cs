@@ -18,6 +18,7 @@ namespace StarPilot
         public float angularResponse = 3.5f;
 
         public Rigidbody Body { get; private set; }
+        public ApproachComputer Approach;
         public bool EngineOn { get; private set; }
         public bool AssistOn { get; private set; } = true;
         public float Hull { get; private set; } = 100f;
@@ -60,6 +61,7 @@ namespace StarPilot
 
         public void ResetShip()
         {
+            Approach?.SetArmed(false);
             Body.position = spawnPosition;
             Body.rotation = spawnRotation;
             Body.linearVelocity = Vector3.zero;
@@ -86,7 +88,9 @@ namespace StarPilot
             if (Speed >= limit && Vector3.Dot(acceleration, localVelocity) > 0f)
                 acceleration -= Vector3.Project(acceleration, localVelocity);
 
-            Body.AddRelativeForce(acceleration, ForceMode.Acceleration);
+            Vector3 worldAcceleration=transform.TransformDirection(acceleration);
+            if(Approach)worldAcceleration=Approach.ConstrainAcceleration(worldAcceleration,Time.fixedDeltaTime);
+            Body.AddForce(worldAcceleration, ForceMode.Acceleration);
             if (Brake)
                 Body.AddForce(Vector3.ClampMagnitude(-Body.linearVelocity / Time.fixedDeltaTime,
                     brakingAcceleration), ForceMode.Acceleration);

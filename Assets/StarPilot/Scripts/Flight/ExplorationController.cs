@@ -28,6 +28,10 @@ namespace StarPilot
         public int UsedCargo=>Save.Cargo+(Mission!=null && Mission.Carrying?ResearchMission.CargoUnits:0);
         public string CargoSummary=>$"ГРУЗ {UsedCargo}/{Capacity}   ДАННЫЕ {Save.Data}";
         public string AccountSummary=>$"{Save.Credits} CR   СКАНЕР MK {Grade+1}";
+        public float RadarRange=>radarRanges[radarScale];
+        static readonly float[] radarRanges={500,1500,3000};
+        int radarScale=1;
+        public void CycleRadarRange(){if(Active)radarScale=(radarScale+1)%radarRanges.Length;}
         public event Action<bool> Feedback;
         readonly HashSet<string> scanned=new HashSet<string>(),collected=new HashSet<string>();
         float work,noticeUntil;
@@ -44,6 +48,7 @@ namespace StarPilot
         }
         public void SetActiveMode(bool active)
         {
+            Ship.Approach?.SetArmed(false);
             Active=active;FollowingMission=active;ScanRequested=InteractRequested=false;Target=null;ResetWork();World.SetExploration(active);
         }
         public void RestoreSite(ExplorationSite site)

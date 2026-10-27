@@ -9,7 +9,8 @@ namespace StarPilot
         public ShipFlightController Ship;
         public ExplorationController Expedition;
         AudioSource source, instruments;
-        AudioClip loop, confirmation;
+        AudioClip loop, confirmation, approachAlert;
+        float nextApproachAlert;
         public float ImpactFlash { get; private set; }
 
         void Start()
@@ -42,6 +43,13 @@ namespace StarPilot
                 if(phase>=0 && phase<.2f)cue[i]=Mathf.Sin(2*Mathf.PI*(t<.2f?660:990)*phase)*Mathf.Sin(Mathf.PI*phase/.2f)*.4f;
             }
             confirmation=AudioClip.Create("Survey confirmation",cue.Length,1,sampleRate,false);confirmation.SetData(cue,0);
+            float[] warning=new float[sampleRate/3];
+            for(int i=0;i<warning.Length;i++)
+            {
+                float t=i/(float)sampleRate,phase=t%.16f;
+                warning[i]=Mathf.Sin(2*Mathf.PI*440*t)*Mathf.Sin(Mathf.PI*Mathf.Clamp01(phase/.1f))*.35f;
+            }
+            approachAlert=AudioClip.Create("Approach braking advisory",warning.Length,1,sampleRate,false);approachAlert.SetData(warning,0);
             if(Expedition)Expedition.Feedback+=OnSurvey;
         }
 
@@ -60,6 +68,8 @@ namespace StarPilot
             source.volume = Mathf.MoveTowards(source.volume, target, Time.unscaledDeltaTime * 0.5f);
             source.pitch = Mathf.Lerp(source.pitch, 0.8f + Ship.Thrust * (Ship.Boost ? 0.8f : 0.4f), Time.unscaledDeltaTime * 3f);
             ImpactFlash = Mathf.MoveTowards(ImpactFlash, 0f, Time.unscaledDeltaTime * 2f);
+            if(Ship.ControlsEnabled && Ship.Approach && Ship.Approach.TooFast && Time.time>=nextApproachAlert)
+            {instruments.PlayOneShot(approachAlert);nextApproachAlert=Time.time+4;}
         }
 
         void OnDestroy()
@@ -68,6 +78,7 @@ namespace StarPilot
             if (Expedition) Expedition.Feedback -= OnSurvey;
             if (loop) Destroy(loop);
             if (confirmation) Destroy(confirmation);
+            if (approachAlert) Destroy(approachAlert);
         }
     }
 }

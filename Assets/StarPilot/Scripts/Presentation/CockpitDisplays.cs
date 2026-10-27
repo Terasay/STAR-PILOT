@@ -18,6 +18,8 @@ namespace StarPilot
         public GameObject ResearchPanel;
         public Text ResearchName,ResearchStep,ResearchLog,ResearchAction;
         public Image[] ResearchLegs;
+        public GameObject ApproachPanel;
+        public Text ApproachMode,ClosingSpeed,ApproachLimits,ApproachWarning,RadarScale;
         public ShipLighting Lighting;
         public RectTransform[] AxisIndicators=new RectTransform[3];
         public FlightInstrument[] Instruments;
@@ -45,8 +47,17 @@ namespace StarPilot
             bool exploring=Expedition && Expedition.Active;
             OperationsPanel.SetActive(exploring);SystemsText.gameObject.SetActive(!exploring);
             ResearchPanel.SetActive(exploring);
+            ApproachPanel.SetActive(exploring);
             if(exploring)
             {
+                var approach=Ship.Approach;
+                ApproachMode.text=approach.Armed?"СБЛИЖЕНИЕ\nZ · ВКЛЮЧЕНО":"РУЧНОЙ ПОЛЁТ\nZ · СБЛИЖЕНИЕ";
+                ApproachMode.color=approach.Armed?new Color(.28f,.85f,.87f):new Color(.62f,.79f,.8f);
+                ClosingSpeed.text=approach.Available?$"{approach.ClosingSpeed:+000.0;-000.0;000.0}":"—";
+                ApproachLimits.text=approach.Available?$"ТОРМОЗНОЙ ПУТЬ\n{approach.StoppingDistance:0} м   /   СТОП {approach.Standoff:0} м":"ВЫБЕРИТЕ ЦЕЛЬ\nV / J / B";
+                ApproachWarning.text=!Ship.EngineOn?"НУЖЕН ДВИГАТЕЛЬ":!approach.Available?"НЕТ ЦЕЛИ":approach.TooFast?"ТОРМОЗИТЕ\nSPACE / BRAKE":approach.Limiting?"СНИЖАЮ СКОРОСТЬ":approach.ClosingSpeed< -1?"УДАЛЕНИЕ ОТ ЦЕЛИ":approach.Margin<=6?"РАБОЧАЯ ДИСТАНЦИЯ":"СЛЕДУЙТЕ КУРСУ";
+                ApproachWarning.color=approach.TooFast?new Color(1,.35f,.15f):new Color(.62f,.89f,.88f);
+                RadarScale.text=$"РАДАР {Expedition.RadarRange/1000:0.0} км\nN · МАСШТАБ";
                 var mission=Expedition.Mission;
                 ResearchName.text=mission.Name;
                 ResearchStep.text=mission.Step.Replace(" · ","\n");ResearchLog.text=mission.LatestEntry;

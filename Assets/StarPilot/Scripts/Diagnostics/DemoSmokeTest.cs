@@ -12,7 +12,7 @@ namespace StarPilot
 {
     /// <summary>Opt-in integration checks in an actual Windows player, including rendered screenshots.</summary>
     [DefaultExecutionOrder(-50)]
-    public sealed class DemoSmokeTest : MonoBehaviour
+    public sealed partial class DemoSmokeTest : MonoBehaviour
     {
         public DemoBootstrap Demo;
         [Serializable] sealed class Check { public string name; public bool passed; public string detail; }
@@ -206,6 +206,7 @@ namespace StarPilot
             Demo.PilotCamera.transform.localRotation=Quaternion.identity;
             yield return ExplorationChecks();
             yield return ResearchChecks();
+            yield return ApproachChecks();
             yield return new WaitForSecondsRealtime(.5f);
             CheckResult("No runtime errors",report.errors.Count==0,$"errors {report.errors.Count}");
             File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
@@ -393,7 +394,9 @@ namespace StarPilot
             PlaceShip(expedition.Target.Position-Vector3.forward*25,Quaternion.identity);expedition.Save.Cargo=expedition.Capacity-1;
             expedition.InteractRequested=true;yield return new WaitForSeconds(.35f);
             CheckResult("Research archive needs two cargo slots",expedition.Mission.Stage==ResearchStage.Archive && expedition.Progress==0,"Archive cannot be recovered when only one slot is free");
-            expedition.Save.Cargo=0;yield return new WaitForSeconds(1);CaptureFrame("18-archive-recovery.png");
+            expedition.Save.Cargo=0;yield return new WaitForSeconds(1);
+            float probeBrightness=CaptureFrame("18-archive-recovery.png");
+            CheckResult("Close approach retains probe surface detail",probeBrightness>.04f && probeBrightness<.9f,$"Probe centre brightness {probeBrightness:F3}; floodlights reduce power near solid hulls");
             yield return new WaitForSeconds(1.8f);expedition.InteractRequested=false;
             int credits=expedition.Save.Credits;
             CheckResult("Archive recovery reserves cargo",expedition.Mission.Carrying && expedition.UsedCargo==2 && expedition.Save.Cargo==0 && expedition.Target.Kind==SiteKind.Station,"Mission payload is distinct from ordinary cargo and awaiting delivery");

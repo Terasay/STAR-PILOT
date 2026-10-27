@@ -31,6 +31,7 @@ namespace StarPilot
             World=builder.ExplorationWorld;
             Expedition=gameObject.AddComponent<ExplorationController>();Expedition.Initialize(Ship,World,Cockpit);
             Input.Expedition=Expedition;displays.Expedition=Expedition;
+            var approach=Ship.gameObject.AddComponent<ApproachComputer>();approach.Ship=Ship;approach.Expedition=Expedition;Ship.Approach=approach;
             foreach(var instrument in displays.Instruments)instrument.Expedition=Expedition;
             Route.gameObject.SetActive(false);
             Audio=Ship.gameObject.AddComponent<ShipAudio>();Audio.Ship=Ship;Audio.Expedition=Expedition;

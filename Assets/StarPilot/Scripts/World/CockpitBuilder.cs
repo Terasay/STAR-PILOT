@@ -74,11 +74,20 @@ namespace StarPilot
 
             for(int side=-1;side<=1;side+=2)
             {
-                var auxiliary=Monitor(cockpit,side<0?"ATTITUDE / IMU":"AUXILIARY / LOG",new Vector3(side*1.13f,side<0?1.04f:1.18f,.87f),new Vector2(280,430),new Vector3(20,side*28,0));
+                var auxiliary=Monitor(cockpit,side<0?"FLIGHT / APPROACH":"AUXILIARY / LOG",new Vector3(side*1.13f,1.18f,.87f),new Vector2(280,430),new Vector3(20,side*28,0));
                 if(side<0)
                 {
                     instruments.Add(FlightInstrument.Create(auxiliary.transform,FlightInstrument.Instrument.Attitude,new Vector2(0,30),displays.Ship));
                     displays.AttitudeText=Label(auxiliary.transform,"Attitude data","P +000  Y +000\nR +000",17,new Vector2(0,-125),new Vector2(240,70),TextAnchor.MiddleCenter);
+                    var approach=CockpitDisplays.Rect(auxiliary.transform,"Approach computer",new Vector2(0,-4),new Vector2(268,382),new Color(.003f,.013f,.019f));
+                    displays.ApproachPanel=approach.gameObject;
+                    displays.ApproachMode=CockpitDisplays.Text(approach.transform,"Approach mode","",23,Cyan,new Vector2(0,147),new Vector2(252,60),TextAnchor.MiddleCenter);
+                    displays.ClosingSpeed=CockpitDisplays.Text(approach.transform,"Closing speed","",38,Ink,new Vector2(0,84),new Vector2(250,55),TextAnchor.MiddleCenter);
+                    CockpitDisplays.Text(approach.transform,"Closing units","м/с · СБЛИЖЕНИЕ",20,Ink,new Vector2(0,42),new Vector2(250,32),TextAnchor.MiddleCenter);
+                    CockpitDisplays.Rect(approach.transform,"Approach divider",new Vector2(0,15),new Vector2(230,2),Cyan);
+                    displays.ApproachLimits=CockpitDisplays.Text(approach.transform,"Approach distances","",23,Ink,new Vector2(0,-34),new Vector2(244,82),TextAnchor.MiddleCenter);
+                    displays.ApproachWarning=CockpitDisplays.Text(approach.transform,"Approach advisory","",23,Amber,new Vector2(0,-103),new Vector2(250,55),TextAnchor.MiddleCenter);
+                    displays.RadarScale=CockpitDisplays.Text(approach.transform,"Radar scale","",21,Cyan,new Vector2(0,-162),new Vector2(250,42),TextAnchor.MiddleCenter);
                 }
                 else
                 {
@@ -102,6 +111,7 @@ namespace StarPilot
             displays.Instruments=instruments.ToArray();
             Controls(cockpit,displays,interaction);
             SurveyControls(cockpit,displays,interaction);
+            NavigationControls(cockpit,displays,interaction);
             var hands=ship.gameObject.AddComponent<PilotHands>();hands.Interaction=interaction;
             hands.LeftRest=Rest(displays.Throttle,new Vector3(0,.30f,-.028f),new Vector3(8,-8,0));
             hands.RightRest=Rest(displays.Stick,new Vector3(.054f,.245f,-.025f),new Vector3(22,-12,-48));
@@ -326,6 +336,27 @@ namespace StarPilot
             }
         }
         static Font instrumentFont;
+        void NavigationControls(Transform parent,CockpitDisplays displays,CockpitInteraction interaction)
+        {
+            var bank=new GameObject("Approach and radar console").transform;bank.SetParent(parent,false);
+            bank.localPosition=new Vector3(0,.73f,.40f);bank.localRotation=Quaternion.Euler(62,0,0);
+            g.Panel("Navigation console surround",bank,Vector3.zero,new Vector3(.64f,.19f,.055f),hull);
+            for(int i=0;i<2;i++)
+            {
+                string caption=i==0?"APPROACH [Z]":"RADAR [N]";
+                var control=new GameObject(caption,typeof(BoxCollider),typeof(CockpitControl)).GetComponent<CockpitControl>();
+                control.transform.SetParent(bank,false);control.transform.localPosition=new Vector3(i==0?-.16f:.16f,.015f,-.034f);
+                control.Action=i==0?CockpitAction.Approach:CockpitAction.RadarRange;control.Ship=displays.Ship;control.Lit=cyan;control.Unlit=dark;
+                var hit=control.GetComponent<BoxCollider>();hit.size=new Vector3(.25f,.13f,.09f);hit.isTrigger=true;
+                g.Panel("Navigation key socket",control.transform,Vector3.zero,new Vector3(.25f,.085f,.022f),dark);
+                control.Handle=new GameObject("Navigation key mechanism").transform;control.Handle.SetParent(control.transform,false);
+                g.Panel("Navigation rocker",control.Handle,new Vector3(0,0,-.018f),new Vector3(.22f,.067f,.025f),face);
+                control.Lamp=g.Box("Navigation key status",control.Handle,new Vector3(0,.024f,-.032f),new Vector3(.17f,.005f,.004f),cyan).GetComponent<Renderer>();
+                var label=CockpitDisplays.Screen(control.transform,"Navigation key legend",new Vector3(0,-.057f,-.029f),new Vector2(285,32),Vector3.zero);
+                label.transform.localScale=Vector3.one*.00085f;Label(label.transform,"Legend",caption,22,Vector2.zero,new Vector2(285,32),TextAnchor.MiddleCenter);
+                interaction.Controls.Add(control);
+            }
+        }
         static Text Label(Transform p,string name,string text,int size,Vector2 position,Vector2 rect,TextAnchor anchor=TextAnchor.UpperLeft)
         {
             var label=CockpitDisplays.Text(p,name,text,size,Ink,position,rect,anchor);

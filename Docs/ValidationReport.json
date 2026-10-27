@@ -6,7 +6,7 @@
         {
             "name": "01-menu.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,716"
+            "detail": "visible sample fraction 0,718"
         },
         {
             "name": "Scene initialized",
@@ -146,12 +146,12 @@
         {
             "name": "Navigation screen unobstructed",
             "passed": true,
-            "detail": "938 illuminated instrument pixels inside central display"
+            "detail": "940 illuminated instrument pixels inside central display"
         },
         {
             "name": "02-cockpit.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,802"
+            "detail": "visible sample fraction 0,798"
         },
         {
             "name": "03-controls.png rendered",
@@ -161,32 +161,32 @@
         {
             "name": "04-space.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,881"
+            "detail": "visible sample fraction 0,879"
         },
         {
             "name": "05-overhead.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,935"
+            "detail": "visible sample fraction 0,929"
         },
         {
             "name": "08-glove-detail.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,827"
+            "detail": "visible sample fraction 0,828"
         },
         {
             "name": "09-glove-open.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,799"
+            "detail": "visible sample fraction 0,795"
         },
         {
             "name": "06-headlights-off.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,872"
+            "detail": "visible sample fraction 0,870"
         },
         {
             "name": "07-headlights-on.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,872"
+            "detail": "visible sample fraction 0,870"
         },
         {
             "name": "Headlights illuminate geometry",
@@ -236,7 +236,7 @@
         {
             "name": "10-survey.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,795"
+            "detail": "visible sample fraction 0,793"
         },
         {
             "name": "Wreck survey reveals cargo",
@@ -251,7 +251,7 @@
         {
             "name": "11-recovery.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,806"
+            "detail": "visible sample fraction 0,796"
         },
         {
             "name": "Physical service recovers a black box",
@@ -271,7 +271,7 @@
         {
             "name": "12-station.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,758"
+            "detail": "visible sample fraction 0,760"
         },
         {
             "name": "Delivery rewards and empties hold",
@@ -291,12 +291,12 @@
         {
             "name": "13-anomaly.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,801"
+            "detail": "visible sample fraction 0,799"
         },
         {
             "name": "15-survey-controls.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,801"
+            "detail": "visible sample fraction 0,799"
         },
         {
             "name": "Mouse scans through equipment console",
@@ -346,7 +346,142 @@
         {
             "name": "14-exploration-cockpit.png rendered",
             "passed": true,
-            "detail": "visible sample fraction 0,800"
+            "detail": "visible sample fraction 0,798"
+        },
+        {
+            "name": "First mission starts ahead in the launch sector",
+            "passed": true,
+            "detail": "Initial mission anchor is stable at the origin, independent of sub-millimeter physics offsets on a sector boundary"
+        },
+        {
+            "name": "Version 0.5 save migration",
+            "passed": true,
+            "detail": "Previous credits, payload and discoveries survive migration; a mission can be added independently"
+        },
+        {
+            "name": "Invalid mission save is preserved",
+            "passed": true,
+            "detail": "Invalid mission state is rejected without overwriting the file"
+        },
+        {
+            "name": "Research objectives have approach clearance",
+            "passed": true,
+            "detail": "72 mission locations across positive and negative sectors avoid generated sites and rocks"
+        },
+        {
+            "name": "Physical mission key selects expedition",
+            "passed": true,
+            "detail": "MISSION selects a saved objective, independent of NEXT and BASE"
+        },
+        {
+            "name": "Keyboard mission command animates its button",
+            "passed": true,
+            "detail": "J selects the mission and drives the same physical button feedback"
+        },
+        {
+            "name": "16-research-relay.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,799"
+        },
+        {
+            "name": "Research scan pauses with flight",
+            "passed": true,
+            "detail": "Opening the menu freezes mission work"
+        },
+        {
+            "name": "Relay reveals the next lead",
+            "passed": true,
+            "detail": "Relay memory reveals an anomaly; no credits awarded for the lead"
+        },
+        {
+            "name": "First parallax sample persists",
+            "passed": true,
+            "detail": "The first observation direction is saved in stable world axes"
+        },
+        {
+            "name": "Second sample requires a new position",
+            "passed": true,
+            "detail": "Holding SCAN at the first location cannot complete both observations"
+        },
+        {
+            "name": "Distant mission remains navigable",
+            "passed": true,
+            "detail": "Only the coordinate proxy remains while the objective model is outside resident sectors"
+        },
+        {
+            "name": "17-parallax-scan.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,807"
+        },
+        {
+            "name": "Parallax survives origin shift and reload",
+            "passed": true,
+            "detail": "A 90 degree observation remains valid after sector unload, origin shift and saved-state restoration"
+        },
+        {
+            "name": "Two bearings reveal the research probe",
+            "passed": true,
+            "detail": "Second observation reveals a new probe destination"
+        },
+        {
+            "name": "Probe scan unlocks its archive",
+            "passed": true,
+            "detail": "Sealed archive becomes visible after scanning the probe"
+        },
+        {
+            "name": "Research archive needs two cargo slots",
+            "passed": true,
+            "detail": "Archive cannot be recovered when only one slot is free"
+        },
+        {
+            "name": "18-archive-recovery.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,798"
+        },
+        {
+            "name": "Close approach retains probe surface detail",
+            "passed": true,
+            "detail": "Probe centre brightness 0,618; floodlights reduce power near solid hulls"
+        },
+        {
+            "name": "Archive recovery reserves cargo",
+            "passed": true,
+            "detail": "Mission payload is distinct from ordinary cargo and awaiting delivery"
+        },
+        {
+            "name": "Aborted mission cargo can be recovered again",
+            "passed": true,
+            "detail": "Aborting drops mission cargo without locking the expedition or granting a reward"
+        },
+        {
+            "name": "Research archive delivery completes expedition",
+            "passed": true,
+            "detail": "720 CR paid only after delivery; mission cargo cleared"
+        },
+        {
+            "name": "19-expedition-journal.png rendered",
+            "passed": true,
+            "detail": "visible sample fraction 0,878"
+        },
+        {
+            "name": "Completed mission cannot pay twice",
+            "passed": true,
+            "detail": "Repeated service cannot pay for the same archive again"
+        },
+        {
+            "name": "Next expedition requires station service range",
+            "passed": true,
+            "detail": "New expedition cannot start while away from the station"
+        },
+        {
+            "name": "Station issues a new expedition",
+            "passed": true,
+            "detail": "MISSION at the station starts the next chain with fresh objective IDs and preserved earnings"
+        },
+        {
+            "name": "Journal stays bounded and physical",
+            "passed": true,
+            "detail": "Expedition status is on the cockpit instrument; flight overlay stays empty"
         },
         {
             "name": "No runtime errors",
